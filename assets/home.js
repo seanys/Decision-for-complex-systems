@@ -106,6 +106,15 @@
   }
   tile("thumb-power", (g) => { icons.turbine(g, 50, 45, 0.8); icons.tower(g, 105, 40, 0.9); icons.generator(g, 160, 80, 1); icons.generator(g, 205, 80, 0.8); });
   tile("thumb-cloud", (g) => { icons.rack(g, 70, 30, 1); icons.rack(g, 120, 30, 1); icons.rack(g, 170, 30, 1); });
+  tile("thumb-voltage", (g) => {
+    icons.transformer(g, 40, 50, 0.9);
+    el("line", { x1: 71, y1: 50, x2: 225, y2: 50 }, g);
+    [100, 150, 200].forEach((x) => {
+      el("line", { x1: x, y1: 50, x2: x, y2: 72 }, g);
+      el("path", { d: `M${x - 16},${108} L${x - 16},${86} L${x},${72} L${x + 16},${86} L${x + 16},${108} Z`, fill: "none" }, g);
+      el("path", { d: `M${x - 2},${75} L${x + 14},${85}`, stroke: GLOW, "stroke-width": 3 }, g);
+    });
+  });
   tile("thumb-more", (g) => { icons.trafficLight(g, 60, 25, 1); icons.transformer(g, 150, 70, 1.2); }, "0 0 220 120");
 
 })();
