@@ -1,6 +1,14 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-F93VYS39NR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-F93VYS39NR');
+  </script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AI for Complex Systems</title>
@@ -10,7 +18,6 @@
   <header class="hero">
     <div id="hero-art" class="hero-art" aria-hidden="true"></div>
     <div class="hero-text">
-      <p class="hero-eyebrow">Descent-Guided Policy Gradient</p>
       <h1>AI for Real-Time Decision-Making in Complex Systems</h1>
       <p>With growing automation, digitalization and connectivity, real-time decision-making in complex systems (e.g., transportation, energy and cloud computing) is becoming both feasible and necessary. How can we use AI to make efficient, reliable and interpretable decisions in these large-scale complex systems?</p>
     </div>
@@ -66,12 +73,23 @@
       <div class="card tutorial" id="tutorial-link">
         <div>
           <p class="eyebrow">Tutorial</p>
-          <h2>Learn how DG-PG works</h2>
+          <h2>Learn how Descent-Guided Policy Gradient works</h2>
           <p class="note">A step-by-step tutorial and the paper behind these scenarios.</p>
         </div>
         <div class="tutorial-links">
           <a class="pill" href="https://seanys.github.io/blog/2026/why-we-need-analytical-models-to-guide-training-for-scalable-multi-agent-learning/">Tutorial page →</a>
           <a class="pill" href="https://arxiv.org/abs/2602.20078">Paper (arXiv) →</a>
+        </div>
+      </div>
+      <div class="card tutorial" id="routing-link">
+        <div>
+          <p class="eyebrow">Related work</p>
+          <h2>Routing for connected vehicles</h2>
+          <p class="note">A Markov routing game for joint adaptive routing in stochastic traffic networks, learned at scale with mean-field reinforcement learning.</p>
+        </div>
+        <div class="tutorial-links">
+          <a class="pill" href="https://seanys.github.io/blog/2026/routing-for-connected-vehicles/">Blog post →</a>
+          <a class="pill" href="https://www.sciencedirect.com/science/article/abs/pii/S0191261524001218">Paper (TR-B) →</a>
         </div>
       </div>
     </section>
