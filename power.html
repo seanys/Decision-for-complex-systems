@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Distributed Generation Control</title>
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="header-brand" href="index.html">AI for Complex Systems</a>
+      <nav class="header-nav" aria-label="Site">
+        <details class="nav-menu">
+          <summary>Scenarios</summary>
+          <div class="nav-menu-list">
+            <a href="power.html" aria-current="page">Power generation control</a>
+            <a href="cloud.html">Cloud job scheduling</a>
+            <a class="nav-menu-all" href="index.html#scenarios">All scenarios →</a>
+          </div>
+        </details>
+        <a href="https://seanys.github.io/blog/2026/why-we-need-analytical-models-to-guide-training-for-scalable-multi-agent-learning/">Tutorial</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <p class="eyebrow"><a href="index.html">Scenarios</a> / Power generation</p>
+    <h1>AI for Real-Time Distributed Power Generation Control</h1>
+
+    <section class="section card" style="margin-top:18px">
+      <h2>Real-time economic dispatch with frequency regulation</h2>
+      <div class="problem">
+        <div id="problem-diagram"></div>
+        <div class="spec">
+          <div class="goal"><svg class="spec-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/></svg><div><b>Shared objective</b><p>Keep the frequency at 50 Hz and minimize the total generation cost</p></div></div>
+          <div><svg class="spec-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><div><b>Each generator observes</b><p>Grid frequency, load and generator outputs</p></div></div>
+          <div><svg class="spec-icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="9" cy="7" r="2.4"/><circle cx="15" cy="17" r="2.4"/></svg><div><b>Each generator decides</b><p>The change of its own output, every 2 seconds</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="intro">
+        <h2>How the grid responds to changing wind</h2>
+      </div>
+    </section>
+
+    <section class="controls" aria-label="Playback controls">
+      <button class="primary" id="play" type="button">Start</button>
+      <button id="restart" type="button">Restart</button>
+      <div class="speed" role="group" aria-label="Playback speed">
+        <button type="button" data-speed="1" aria-pressed="false">1×</button>
+        <button type="button" data-speed="2" aria-pressed="false">2×</button>
+        <button type="button" data-speed="4" aria-pressed="true">4×</button>
+        <button type="button" data-speed="8" aria-pressed="false">8×</button>
+      </div>
+      <input id="time" type="range" min="0" max="1200" value="0" step="1" aria-label="Time">
+      <output id="clock">00:00</output>
+    </section>
+
+    <section class="grid-2">
+      <article class="card">
+        <div class="panel-head"><h2>Without control</h2><span class="tag baseline">Governors only</span></div>
+        <div class="kpis" id="kpi-baseline"></div>
+      </article>
+      <article class="card">
+        <div class="panel-head"><h2>With AI control</h2><span class="tag dgpg">Adaptive</span></div>
+        <div class="kpis" id="kpi-dgpg"></div>
+      </article>
+    </section>
+    <section class="grid-2" style="margin-top:16px">
+      <div class="card"><h3>Load and generation without control</h3><div id="chart-gen-baseline"></div></div>
+      <div class="card"><h3>Load and generation with AI control</h3><div id="chart-gen-dgpg"></div></div>
+      <div class="card" id="chart-frequency"></div>
+      <div class="card"><div id="chart-cost"></div><p class="note" style="margin:0">Extra cost: generation cost above the cheapest way to produce the same total output.</p></div>
+    </section>
+    <p class="lead" id="outcome" style="margin-top:14px"></p>
+
+    <section class="section">
+      <div class="intro">
+        <h2>How to train such an AI efficiently?</h2>
+      </div>
+      <div class="card grid-2 scaling">
+        <h2 style="grid-column:1/-1;margin:0">Why conventional multi-agent training struggles at scale</h2>
+        <div>
+          <h3>One agent's share of the shared reward</h3>
+          <div id="share-bars"></div>
+          <p class="note">Illustration with equal contributions: the blue slice is what agent i's own action causes.</p>
+        </div>
+        <div>
+          <h3>Noise in each agent's learning signal</h3>
+          <div id="chart-scaling"></div>
+        </div>
+      </div>
+      <p class="lead" style="margin:12px 0 18px">With conventional multi-agent reinforcement learning, every agent learns from the same reward, in which its own effect shrinks as the system grows.</p>
+      <div class="card steps">
+        <h2 style="margin:12px 0 4px">How DG-PG trains the generators, step by step</h2>
+        <p class="steps-lead">With global information about the whole system, a centralized solver can compute the optimal load, one that keeps generation and demand balanced at the lowest cost. Could such knowledge be internalized into how the agents are trained?</p>
+        <div class="step">
+          <span class="step-num">1</span>
+          <div class="step-head"><b>Reference</b><span class="step-tag">offline, centralized</span></div>
+          <div class="step-body"><math displaystyle="true"><mover accent="true"><mi>p</mi><mo>~</mo></mover><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mo>=</mo><munder><mrow><mi>arg</mi><mspace width="0.2em"/><mi>min</mi></mrow><mi>p</mi></munder><munder><mo>∑</mo><mi>i</mi></munder><msub><mi>C</mi><mi>i</mi></msub><mo stretchy="false">(</mo><msub><mi>p</mi><mi>i</mi></msub><mo stretchy="false">)</mo><mspace width="1.2em"/><mtext>s.t.</mtext><mspace width="0.6em"/><munder><mo>∑</mo><mi>i</mi></munder><msub><mi>p</mi><mi>i</mi></msub><mo>=</mo><msub><mi>P</mi><mi>L</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mo>,</mo><mspace width="0.6em"/><msubsup><mi>p</mi><mi>i</mi><mi>min</mi></msubsup><mo>≤</mo><msub><mi>p</mi><mi>i</mi></msub><mo>≤</mo><msubsup><mi>p</mi><mi>i</mi><mi>max</mi></msubsup></math><p>Least-cost output of every generator for the current net load P<sub>L</sub>.</p></div>
+        </div>
+        <div class="step">
+          <span class="step-num">2</span>
+          <div class="step-head"><b>Guidance</b><span class="step-tag">per generator</span></div>
+          <div class="step-body"><math displaystyle="true"><msub><mi>g</mi><mi>i</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mo>=</mo><mfrac><mn>1</mn><mn>2</mn></mfrac><msup><mrow><mo>(</mo><mfrac><mrow><msub><mi>u</mi><mi>i</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo>+</mo><mn>1</mn><mo stretchy="false">)</mo><mo>−</mo><msub><mover accent="true"><mi>p</mi><mo>~</mo></mover><mi>i</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow><mrow><msubsup><mi>p</mi><mi>i</mi><mi>max</mi></msubsup></mrow></mfrac><mo>)</mo></mrow><mn>2</mn></msup><mo>−</mo><mfrac><mn>1</mn><mn>2</mn></mfrac><msup><mrow><mo>(</mo><mfrac><mrow><msub><mi>u</mi><mi>i</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mo>−</mo><msub><mover accent="true"><mi>p</mi><mo>~</mo></mover><mi>i</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow><mrow><msubsup><mi>p</mi><mi>i</mi><mi>max</mi></msubsup></mrow></mfrac><mo>)</mo></mrow><mn>2</mn></msup></math><p>Change in the distance between generator i's command u<sub>i</sub> and its reference output; negative when it moves closer.</p></div>
+        </div>
+        <div class="step">
+          <span class="step-num">3</span>
+          <div class="step-head"><b>Learning signal</b><span class="step-tag">per generator</span></div>
+          <div class="step-body"><math displaystyle="true"><msub><mover accent="true"><mi>A</mi><mo>^</mo></mover><mi>i</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mo>=</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>α</mi><mo stretchy="false">)</mo><mspace width="0.2em"/><mi>A</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mo>−</mo><mi>α</mi><mspace width="0.2em"/><msub><mover accent="true"><mi>g</mi><mo>^</mo></mover><mi>i</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></math><p>Shared advantage A of the reward r = −[(Δf / 0.05 Hz)² + extra cost], combined with the normalized guidance; α = 0.9.</p></div>
+        </div>
+        <div class="step">
+          <span class="step-num">4</span>
+          <div class="step-head"><b>Policy update</b><span class="step-tag">internalizes the reference</span></div>
+          <div class="step-body"><math displaystyle="true"><msub><mo>∇</mo><mi>θ</mi></msub><mi>J</mi><mo>≈</mo><munder><mo>∑</mo><mi>t</mi></munder><munder><mo>∑</mo><mi>i</mi></munder><msub><mover accent="true"><mi>A</mi><mo>^</mo></mover><mi>i</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mspace width="0.2em"/><msub><mo>∇</mo><mi>θ</mi></msub><mi>log</mi><mo>⁡</mo><mspace width="0.17em"/><msub><mi>π</mi><mi>θ</mi></msub><mo stretchy="false">(</mo><msub><mi>a</mi><mi>i</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mo stretchy="false">|</mo><msub><mi>o</mi><mi>i</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mo stretchy="false">)</mo></math><p>Each generator acts on its own observation o<sub>i</sub>; the reference and the guidance are not needed at run time.</p></div>
+        </div>
+        <p class="steps-summary">At its core, DG-PG uses prior knowledge of the system, in the form of a reference state, to guide the training of decentralized policies and give every agent a clear optimization signal. Through training, each agent will internalize in its policy how to adjust its power output to what it observes.</p>
+      </div>
+      <p class="note" style="margin:18px 0 10px">The charts below show A(t) and −ĝ<sub>i</sub>(t) during one training run.</p>
+      <div class="grid-2">
+        <div class="card">
+          <h3 id="signal-title">One generator during training</h3>
+          <div id="chart-signal-reward"></div>
+          <div id="chart-signal-guide"></div>
+          <div class="slider-row"><span>Time</span><input id="signal-step" type="range" min="0" max="1199" value="300"><output id="signal-step-out"></output></div>
+        </div>
+        <div class="card">
+          <h3>All generators at the selected time</h3>
+          <div id="chart-bars-reward"></div>
+          <div id="chart-bars-guide"></div>
+          <p class="note" id="spread-note"></p>
+        </div>
+      </div>
+      <p class="note" style="margin-top:10px">One training run after 5 episodes. Separate vertical scales. Click a bar to select a generator.</p>
+
+      <div class="grid-2" style="margin-top:16px">
+        <div class="card">
+          <h3>Learning progress</h3>
+          <div id="chart-curve-frequency"></div>
+          <div id="chart-curve-cost"></div>
+          <p class="note" id="curve-note"></p>
+        </div>
+        <div class="card">
+          <h3>Extra cost on the replayed disturbance</h3>
+          <div id="chart-progress"></div>
+          <div class="slider-row"><span>Episode</span><input id="episode" type="range" min="0" max="10" value="1" step="1"><output id="episode-out"></output></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <p class="footer-title">AI for Complex Systems</p>
+        <p>Interactive scenarios of AI agents making real-time decisions in large systems.</p>
+        <div class="footer-icons">
+          <a href="mailto:yang-shan@nus.edu.sg" title="Email" aria-label="Email"><svg viewBox="0 0 16 16"><path d="M.05 3.555A2 2 0 012 2h12a2 2 0 011.95 1.555L8 8.414.05 3.555zM0 4.697v7.104l5.803-3.558L0 4.697zM6.761 8.83l-6.57 4.027A2 2 0 002 14h12a2 2 0 001.808-1.144l-6.57-4.027L8 9.586l-1.239-.757zm3.436-.586L16 11.801V4.697l-5.803 3.546z"/></svg></a>
+          <a href="https://github.com/seanys" title="GitHub" aria-label="GitHub"><svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
+          <a href="https://scholar.google.com/citations?user=Z__RCosAAAAJ" title="Google Scholar" aria-label="Google Scholar"><svg viewBox="0 0 16 16"><path d="M8.211 2.047a.5.5 0 00-.422 0l-7.5 3.5a.5.5 0 00.025.917l7.5 3a.5.5 0 00.372 0L14 7.14V13a1 1 0 00-1 1v2h3v-2a1 1 0 00-1-1V6.739l.686-.275a.5.5 0 00.025-.917l-7.5-3.5z"/><path d="M4.176 9.032a.5.5 0 00-.656.327l-.5 1.7a.5.5 0 00.294.605l4.5 1.8a.5.5 0 00.372 0l4.5-1.8a.5.5 0 00.294-.605l-.5-1.7a.5.5 0 00-.656-.327L8 10.466 4.176 9.032z"/></svg></a>
+          <a href="https://www.linkedin.com/in/shan-yang-712135141" title="LinkedIn" aria-label="LinkedIn"><svg viewBox="0 0 16 16"><path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248-.822 0-1.359.54-1.359 1.248 0 .694.521 1.248 1.327 1.248h.016zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016a5.54 5.54 0 01.016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225h2.4z"/></svg></a>
+        </div>
+      </div>
+      <nav class="footer-col" aria-label="Scenarios">
+        <p class="footer-head">Scenarios</p>
+        <a href="power.html">Power generation control</a>
+        <a href="cloud.html">Cloud job scheduling</a>
+      </nav>
+      <nav class="footer-col" aria-label="Resources">
+        <p class="footer-head">Resources</p>
+        <a href="https://seanys.github.io/blog/2026/why-we-need-analytical-models-to-guide-training-for-scalable-multi-agent-learning/">Tutorial</a>
+        <a href="https://github.com/seanys/Descent-Guided-Policy-Gradient-for-Scalable-Cooperative-Multi-Agent-Learning">Code</a>
+        <a href="https://seanys.github.io/">Homepage</a>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© Copyright 2026 <a href="https://seanys.github.io/">YANG Shan</a>.</span>
+      <a href="#">Back to top ↑</a>
+    </div>
+  </footer>
+
+  <script src="data/power.js"></script>
+  <script src="data/variance.js"></script>
+  <script src="assets/plot.js"></script>
+  <script src="assets/power.js"></script>
+  <script src="assets/scaling.js"></script>
+  <script src="assets/nav.js"></script>
+</body>
+</html>
