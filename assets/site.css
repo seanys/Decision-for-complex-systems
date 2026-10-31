@@ -235,3 +235,10 @@ body:has(> .site-footer) > main { flex: 1; width: 100%; }
 .nav-menu-list a[aria-current=page] { color: #f2f8ff; background: rgba(92, 200, 255, 0.18); }
 .nav-menu-list .nav-menu-all { margin-top: 4px; padding-top: 10px; border-top: 1px solid #1c2c45; border-radius: 0 0 6px 6px; color: #5cc8ff; }
 @media (max-width: 640px) { .header-nav { gap: 18px; } .nav-menu-list { right: -60px; } }
+
+/* Robotaxi rebalancing page */
+.timeline-card { margin-top: 16px; padding-bottom: 10px; }
+.pattern-now { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin-bottom: 8px; font-size: 16px; }
+.pattern-now .note { margin: 0; }
+.pattern-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; align-self: center; }
+.city svg { max-width: 600px; margin: 8px auto 0; }

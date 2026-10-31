@@ -115,6 +115,12 @@
       el("path", { d: `M${x - 2},${75} L${x + 14},${85}`, stroke: GLOW, "stroke-width": 3 }, g);
     });
   });
+  tile("thumb-robotaxi", (g) => {
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) el("rect", { x: 52 + c * 48, y: 12 + r * 40, width: 40, height: 32, rx: 5, fill: "none" }, g);
+    [[76, 68], [124, 68], [124, 28], [172, 108]].forEach(([x, y]) => el("rect", { x: x - 7, y: y - 4, width: 14, height: 8, rx: 2.5, fill: "none" }, g));
+    el("path", { d: "M128,68 L162,100", stroke: GLOW, "stroke-width": 2.4, class: "flow", fill: "none" }, g);
+    el("path", { d: "M120,68 L84,68", stroke: GLOW, "stroke-width": 2.4, class: "flow", fill: "none" }, g);
+  });
   tile("thumb-more", (g) => { icons.trafficLight(g, 60, 25, 1); icons.transformer(g, 150, 70, 1.2); }, "0 0 220 120");
 
 })();
