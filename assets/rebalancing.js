@@ -226,6 +226,7 @@
   let selected = 4;
   const guideStep = document.getElementById("guide-step");
   guideStep.max = K - 1;
+  guideStep.value = Math.floor(K / 4);
   const guide = (function guideCity() {
     const svg = el("svg", { viewBox: `0 0 ${SIZE} ${SIZE}`, role: "img", "aria-label": "Robotaxis 20 minutes ahead and the reference" }, document.getElementById("guide-city"));
     arrowMarker(svg, "guide-arrow", colors.dgpg);
@@ -348,6 +349,7 @@
   const slider = document.getElementById("time");
   const playButton = document.getElementById("play");
   slider.max = T;
+  const START = Math.round(T / 4);
 
   function drawFrame() {
     slider.value = k;
@@ -377,23 +379,23 @@
   }
   function setPlaying(value) {
     playing = value;
-    playButton.textContent = playing ? "Pause" : k >= T ? "Replay" : k > 0 ? "Resume" : "Start";
+    playButton.textContent = playing ? "Pause" : k >= T ? "Replay" : k !== START ? "Resume" : "Start";
     if (playing) {
-      if (k >= T) k = 0;
+      if (k >= T) k = START;
       last = null;
       requestAnimationFrame(tick);
     }
   }
   playButton.addEventListener("click", () => setPlaying(!playing));
-  document.getElementById("restart").addEventListener("click", () => { k = 0; drawFrame(); setPlaying(true); });
+  document.getElementById("restart").addEventListener("click", () => { k = START; drawFrame(); setPlaying(true); });
   slider.addEventListener("input", () => { k = +slider.value; drawFrame(); if (!playing) setPlaying(false); });
   document.querySelectorAll(".speed button").forEach((b) => b.addEventListener("click", () => {
     speed = +b.dataset.speed;
     document.querySelectorAll(".speed button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
   }));
 
-  // Open on the step where the city without rebalancing loses most riders.
-  k = D.baseline.lostTotal.indexOf(Math.max(...D.baseline.lostTotal));
+  // Every scenario opens a quarter of the way in.
+  k = START;
   drawFrame();
   drawGuide();
   drawProgress();

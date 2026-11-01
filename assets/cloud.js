@@ -14,7 +14,8 @@
   const range = (n) => Array.from({ length: n }, (_, i) => i);
   const steps = range(T).map((t) => t + 1);
 
-  let k = 0;
+  const START = Math.round(T / 4);   // every scenario opens a quarter of the way in
+  let k = START;
   let selected = 0;
   let playing = false;
   let speed = 4;
@@ -202,6 +203,7 @@
   }));
   const stepInput = document.getElementById("signal-step");
   stepInput.max = T - 1;
+  stepInput.value = Math.floor(T / 4);
   function drawSignals() {
     const s = +stepInput.value;
     document.getElementById("signal-step-out").textContent = `${s + 1}`;
@@ -326,15 +328,15 @@
   }
   function setPlaying(value) {
     playing = value;
-    playButton.textContent = playing ? "Pause" : k >= T ? "Replay" : k > 0 ? "Resume" : "Start";
+    playButton.textContent = playing ? "Pause" : k >= T ? "Replay" : k !== START ? "Resume" : "Start";
     if (playing) {
-      if (k >= T) k = 0;
+      if (k >= T) k = START;
       last = null;
       requestAnimationFrame(tick);
     }
   }
   playButton.addEventListener("click", () => setPlaying(!playing));
-  document.getElementById("restart").addEventListener("click", () => { k = 0; drawFrame(); setPlaying(true); });
+  document.getElementById("restart").addEventListener("click", () => { k = START; drawFrame(); setPlaying(true); });
   slider.addEventListener("input", () => { k = +slider.value; drawFrame(); if (!playing) setPlaying(false); });
   document.querySelectorAll(".speed button").forEach((b) => b.addEventListener("click", () => {
     speed = +b.dataset.speed;

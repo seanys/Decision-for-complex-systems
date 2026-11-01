@@ -216,6 +216,7 @@
   }));
   const stepInput = document.getElementById("signal-step");
   stepInput.max = T - 1;
+  stepInput.value = Math.floor(T / 4);
   function drawSignals() {
     const s = +stepInput.value;
     document.getElementById("signal-step-out").textContent = fmtClock(s);
@@ -313,6 +314,7 @@
   const slider = document.getElementById("time");
   const playButton = document.getElementById("play");
   slider.max = T - 1;
+  const START = Math.round(T / 4);
 
   function select(i) {
     selected = i;
@@ -344,15 +346,15 @@
   }
   function setPlaying(value) {
     playing = value;
-    playButton.textContent = playing ? "Pause" : k >= T - 1 ? "Replay" : k > 0 ? "Resume" : "Start";
+    playButton.textContent = playing ? "Pause" : k >= T - 1 ? "Replay" : k !== START ? "Resume" : "Start";
     if (playing) {
-      if (k >= T - 1) k = 0;
+      if (k >= T - 1) k = START;
       last = null;
       requestAnimationFrame(tick);
     }
   }
   playButton.addEventListener("click", () => setPlaying(!playing));
-  document.getElementById("restart").addEventListener("click", () => { k = 0; drawFrame(); setPlaying(true); });
+  document.getElementById("restart").addEventListener("click", () => { k = START; drawFrame(); setPlaying(true); });
   slider.addEventListener("input", () => { k = +slider.value; drawFrame(); if (!playing) setPlaying(false); });
   document.querySelectorAll(".speed button").forEach((b) => b.addEventListener("click", () => {
     speed = +b.dataset.speed;
@@ -368,8 +370,8 @@
     if (v > bestVar) { bestVar = v; selected = i; }
   }
 
-  // Open on midday, when the voltages are highest.
-  k = D.baseline.v_max.indexOf(Math.max(...D.baseline.v_max));
+  // Every scenario opens a quarter of the way in.
+  k = START;
   drawFrame();
   drawSignals();
   drawProgress();
