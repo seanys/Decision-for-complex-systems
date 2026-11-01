@@ -27,14 +27,13 @@
     <h1>AI for Real-Time Adaptive Routing of Connected Vehicles</h1>
 
     <section class="section card" style="margin-top:18px">
-      <h2>Which link should each connected vehicle take next?</h2>
+      <h2>Rerouting around incidents without creating new jams</h2>
       <div class="problem">
-        <div id="problem-diagram" class="road"></div>
-        <div class="legend-inline" id="problem-legend" style="justify-content:center"></div>
+        <div id="problem-diagram"></div>
         <div class="spec">
           <div class="goal"><svg class="spec-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/></svg><div><b>Each vehicle's objective</b><p>Reach its destination as fast as possible, while all vehicles compete for the same roads</p></div></div>
-          <div><svg class="spec-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><div><b>Each vehicle observes</b><p>Traffic and incidents on every link, and how many vehicles of each OD group intend to take each link</p></div></div>
-          <div><svg class="spec-icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="9" cy="7" r="2.4"/><circle cx="15" cy="17" r="2.4"/></svg><div><b>Each vehicle decides</b><p>Its next link, every 30 seconds</p></div></div>
+          <div><svg class="spec-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><div><b>Each vehicle observes</b><p>Real-time traffic and incidents, and the intended routes of other vehicles</p></div></div>
+          <div><svg class="spec-icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="9" cy="7" r="2.4"/><circle cx="15" cy="17" r="2.4"/></svg><div><b>Each vehicle decides</b><p>Which road to take next, every 30 seconds</p></div></div>
         </div>
       </div>
     </section>
@@ -59,22 +58,16 @@
       <output id="clock">00:00</output>
     </section>
 
-    <section class="card timeline-card">
-      <div class="pattern-now" id="incident-now"></div>
-      <div id="incident-timeline"></div>
-      <p class="note" style="margin:4px 0 0">Bars: traffic incidents on each link over the episode. Click to jump to a moment.</p>
-    </section>
-
     <section class="grid-2" style="margin-top:16px">
       <article class="card">
         <div class="panel-head"><h2>Without adaptive routing</h2><span class="tag baseline">Fixed routes</span></div>
-        <p class="note" style="margin:4px 0 0">Each vehicle keeps the route it was assigned at departure, from the user equilibrium of the network without incidents.</p>
+        <p class="note" style="margin:4px 0 0">Each vehicle keeps the route planned at departure for a network without incidents.</p>
         <div class="kpis" id="kpi-fixed"></div>
         <div class="road" id="map-fixed"></div>
       </article>
       <article class="card">
-        <div class="panel-head"><h2>With learned joint adaptive routing</h2><span class="tag dgpg">Adaptive</span></div>
-        <p class="note" style="margin:4px 0 0">Every 30 seconds, each vehicle chooses its next link from real-time traffic, anticipating the route choices of the other vehicles.</p>
+        <div class="panel-head"><h2>With joint adaptive routing</h2><span class="tag dgpg">Adaptive</span></div>
+        <p class="note" style="margin:4px 0 0">Every 30 seconds, each vehicle chooses its next road from real-time traffic, anticipating the choices of the other vehicles.</p>
         <div class="kpis" id="kpi-adaptive"></div>
         <div class="road" id="map-adaptive"></div>
       </article>

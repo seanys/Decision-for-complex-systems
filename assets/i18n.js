@@ -9,27 +9,15 @@
 //   and the hero whose own text contains Latin letters is looked up by its HTML, with whitespace collapsed.
 //   layout.js calls it right after inserting the footer, before the page scripts run.
 // - Every element with [data-lang-switch] receives the EN / 中文 toggle.
-// The choice is kept in localStorage and shown in the URL: Chinese pages carry ?lang=zh (added on load and to
-// every link within the site), English pages have no parameter. ?lang=en in the URL also sets English.
+// The language is set only by the URL: ?lang=zh shows Chinese, anything else (no parameter) shows English.
+// Nothing is remembered between visits. Links within the site carry ?lang=zh, so Chinese stays on while browsing.
 (function () {
-  const STORE = "site-lang";
-  const store = {
-    get() { try { return localStorage.getItem(STORE); } catch (e) { return null; } },
-    set(value) { try { localStorage.setItem(STORE, value); return localStorage.getItem(STORE) === value; } catch (e) { return false; } },
-  };
-  const param = new URLSearchParams(location.search).get("lang");
-  const lang = param === "zh" || param === "en" ? param : store.get() === "zh" ? "zh" : "en";
-  if (param === lang) store.set(lang);
+  const lang = new URLSearchParams(location.search).get("lang") === "zh" ? "zh" : "en";
   const zh = lang === "zh";
   const ZH = window.I18N_ZH || {};
   const own = (key) => Object.prototype.hasOwnProperty.call(ZH, key);
-
-  // Show the language in the address bar: ?lang=zh for Chinese, nothing for English.
-  if (zh && param !== "zh") {
-    const url = new URL(location.href);
-    url.searchParams.set("lang", "zh");
-    try { history.replaceState(history.state, "", url.href); } catch (e) { /* some file:// setups refuse */ }
-  }
+  // Earlier versions remembered the choice in the browser; clear it.
+  try { localStorage.removeItem("site-lang"); } catch (e) { /* storage unavailable */ }
 
   // Links to other pages of the site carry the language, so the URL always says which one is shown.
   function localize(link) {
@@ -89,7 +77,6 @@
   }
 
   function setLang(next) {
-    store.set(next);
     const url = new URL(location.href);
     if (next === "zh") url.searchParams.set("lang", "zh");
     else url.searchParams.delete("lang");
