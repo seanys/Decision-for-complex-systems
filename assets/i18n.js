@@ -9,7 +9,8 @@
 //   and the hero whose own text contains Latin letters is looked up by its HTML, with whitespace collapsed.
 //   layout.js calls it right after inserting the footer, before the page scripts run.
 // - Every element with [data-lang-switch] receives the EN / 中文 toggle.
-// The choice is kept in localStorage; ?lang=zh or ?lang=en in the URL sets it as well.
+// The choice is kept in localStorage and shown in the URL: Chinese pages carry ?lang=zh (added on load and to
+// every link within the site), English pages have no parameter. ?lang=en in the URL also sets English.
 (function () {
   const STORE = "site-lang";
   const store = {
@@ -22,6 +23,27 @@
   const zh = lang === "zh";
   const ZH = window.I18N_ZH || {};
   const own = (key) => Object.prototype.hasOwnProperty.call(ZH, key);
+
+  // Show the language in the address bar: ?lang=zh for Chinese, nothing for English.
+  if (zh && param !== "zh") {
+    const url = new URL(location.href);
+    url.searchParams.set("lang", "zh");
+    try { history.replaceState(history.state, "", url.href); } catch (e) { /* some file:// setups refuse */ }
+  }
+
+  // Links to other pages of the site carry the language, so the URL always says which one is shown.
+  function localize(link) {
+    const href = link.getAttribute("href");
+    if (!zh || !href || /^(#|[a-z][a-z0-9+.-]*:|\/\/)/i.test(href)) return;
+    const url = new URL(href, location.href);
+    if (url.protocol !== location.protocol || url.host !== location.host || !/(\.html|\/)$/.test(url.pathname)) return;
+    url.searchParams.set("lang", "zh");
+    link.setAttribute("href", href.replace(/[?#].*$/, "") + url.search + url.hash);
+  }
+  if (zh) document.addEventListener("click", (event) => {
+    const link = event.target.closest && event.target.closest("a[href]");
+    if (link) localize(link);
+  }, true);
 
   const root = document.documentElement;
   root.lang = zh ? "zh-CN" : "en";
@@ -61,15 +83,16 @@
         }
       }
     }
+    document.querySelectorAll("a[href]").forEach(localize);
     mountSwitches();
     root.classList.remove("i18n-pending");
   }
 
   function setLang(next) {
+    store.set(next);
     const url = new URL(location.href);
-    // Without storage, carry the choice in the URL instead.
-    if (store.set(next) && !url.searchParams.has("lang")) { location.reload(); return; }
-    url.searchParams.set("lang", next);
+    if (next === "zh") url.searchParams.set("lang", "zh");
+    else url.searchParams.delete("lang");
     location.href = url.href;
   }
 

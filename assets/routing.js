@@ -24,7 +24,7 @@
   document.getElementById("episode-note").textContent =
     `${Math.round(D.meta.spawn_t / 60)} minutes of departures on the Nguyen–Dupuis network: each of the four OD pairs sends a vehicle every ` +
     `${Math.round(1 / D.meta.lam)} seconds on average. High- and medium-risk links suffer random vehicle breakdowns and sudden capacity drops. ` +
-    `Both networks see exactly the same vehicles and incidents; this episode was not used in training.`;
+    `Both networks see exactly the same vehicles and incidents.`;
 
   // ---------- Network geometry ----------
   const W = 600, H = 436, R = 13;
@@ -183,14 +183,10 @@
       `<div class="kpi"><span>Longest queue now</span><strong>${maxQueue(f)} veh</strong></div>`;
   }
 
-  const sumF = (p) => p.summary;
-  const pct = (a, b) => { const c = 100 * (a / b - 1); return `${c < 0 ? "−" : "+"}${Math.abs(c).toFixed(0)} %`; };
-  const evalF = D.evaluation.fixed, evalA = D.evaluation.adaptive;
   document.getElementById("outcome").textContent =
-    `In this episode, joint adaptive routing lowers the mean travel time from ${Math.round(sumF(D.fixed).mean)} s to ${Math.round(sumF(D.adaptive).mean)} s ` +
-    `and the longest trip from ${Math.round(sumF(D.fixed).max)} s to ${Math.round(sumF(D.adaptive).max)} s. ` +
-    `Over ${D.meta.eval_episodes} held-out episodes with random incidents, the mean travel time falls from ${Math.round(evalF.mean)} s to ${Math.round(evalA.mean)} s ` +
-    `(${pct(evalA.mean, evalF.mean)}), and the longest trip from ${Math.round(evalF.max)} s to ${Math.round(evalA.max)} s.`;
+    `Watch link 4 from minute 20, where breakdowns follow one another and a capacity drop adds to them at minute 30. On fixed routes, vehicles keep driving into it: ` +
+    `the link fills up and the queue backs up to origin 4. With joint adaptive routing, part of the vehicles from origin 4 switch to link 3 ` +
+    `while the others stay, so the detour does not jam in turn.`;
 
   // ---------- Incident timeline ----------
   const timeline = (function () {
@@ -227,7 +223,8 @@
   })();
 
   function drawIncidentNow(frame) {
-    const live = activeEvents(timeOf(frame));
+    const seen = new Set();
+    const live = activeEvents(timeOf(frame)).filter(([l, , , kind]) => !seen.has(l + kind) && seen.add(l + kind));
     document.getElementById("incident-now").innerHTML = live.length
       ? live.map(([l, , , kind]) => `<span class="pattern-dot" style="background:${kindColor[kind]}"></span><b>Link ${l}</b><span class="note">${kindName[kind]}</span>`).join("&nbsp;&nbsp;&nbsp;")
       : `<span class="note">No incident at this moment</span>`;
@@ -243,45 +240,6 @@
       { x: minutes, y: policies.adaptive.kpi.map((x) => x.n), color: colors.adaptive, label: names.adaptive },
     ],
   });
-
-  (function drawOdBars() {
-    const box = document.getElementById("chart-od");
-    const Wc = Math.max(320, box.clientWidth), Hc = 250, m = { top: 34, right: 10, bottom: 46, left: 56 };
-    const w = Wc - m.left - m.right, h = Hc - m.top - m.bottom;
-    const svg = el("svg", { viewBox: `0 0 ${Wc} ${Hc}`, role: "img", "aria-label": "Mean travel time by OD pair" }, box);
-    const g = el("g", { transform: `translate(${m.left},${m.top})` }, svg);
-    const groups = ["All", ...NET.ods.map((_, i) => `OD ${i + 1}`)];
-    const val = (e, i) => (i === 0 ? e.mean : e.od_mean[i - 1]);
-    const top = Math.ceil(Math.max(...groups.map((_, i) => Math.max(val(evalF, i), val(evalA, i)))) / 100) * 100;
-    const sy = (v) => h - (v / top) * h;
-    for (const t of window.Plot.niceTicks(0, top, 4)) {
-      el("line", { x1: 0, x2: w, y1: sy(t), y2: sy(t), stroke: "var(--grid)" }, g);
-      el("text", { x: -7, y: sy(t) + 4, "text-anchor": "end", class: "tick-label" }, g).textContent = t;
-    }
-    el("text", { x: -m.left + 14, y: h / 2, "text-anchor": "middle", class: "axis-label", transform: `rotate(-90 ${-m.left + 14} ${h / 2})` }, g).textContent = "Mean travel time (s)";
-    const gw = w / groups.length, bw = Math.min(26, gw * 0.32);
-    groups.forEach((name, i) => {
-      const cx = gw * i + gw / 2;
-      [["fixed", evalF, -1], ["adaptive", evalA, 1]].forEach(([key, e, side]) => {
-        const v = val(e, i);
-        el("rect", { x: cx + (side < 0 ? -bw - 1 : 1), y: sy(v), width: bw, height: h - sy(v), fill: colors[key], rx: 2 }, g);
-        el("text", { x: cx + side * (bw / 2 + 1), y: sy(v) - 4, "text-anchor": "middle", "font-size": 11, fill: "#5b6370" }, g).textContent = Math.round(v);
-      });
-      el("text", { x: cx, y: h + 17, "text-anchor": "middle", class: "tick-label" }, g).textContent = name;
-      if (i > 0) el("text", { x: cx, y: h + 31, "text-anchor": "middle", "font-size": 11, fill: "#8a93a0" }, g).textContent = `${NET.ods[i - 1][0]}→${NET.ods[i - 1][1]}`;
-    });
-    el("line", { x1: 0, x2: w, y1: h, y2: h, stroke: "#000" }, g);
-    let x = 0;
-    for (const key of ["fixed", "adaptive"]) {
-      const lg = el("g", { transform: `translate(${x},-20)` }, g);
-      el("rect", { x: 0, y: -6, width: 14, height: 10, fill: colors[key], rx: 2 }, lg);
-      const tx = el("text", { x: 20, y: 3, class: "legend-label" }, lg);
-      tx.textContent = names[key];
-      x += 20 + tx.getComputedTextLength() + 18;
-    }
-    document.getElementById("od-note").textContent =
-      `Mean over all trips of ${D.meta.eval_episodes} held-out episodes with random incidents, with identical vehicles and incidents for both routing policies.`;
-  })();
 
   // ---------- Playback ----------
   const slider = document.getElementById("time");
