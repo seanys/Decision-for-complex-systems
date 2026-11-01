@@ -197,7 +197,8 @@ svg text { font-family: Helvetica, Arial, sans-serif; fill: var(--ink); }
 .tutorial .eyebrow { color: #5cc8ff; }
 .tutorial h2 { color: #f2f8ff; }
 .tutorial .note { color: #a9c3e6; margin: 0; }
-.tutorial-links { display: flex; gap: 10px; flex-wrap: wrap; }
+.tutorial > div:first-child { flex: 1 1 480px; min-width: 0; }
+.tutorial-links { display: flex; gap: 10px; flex-wrap: wrap; flex: none; }
 .tutorial + .tutorial { margin-top: 16px; }
 .pill { display: inline-block; padding: 8px 16px; border-radius: 20px; border: 1px solid #5cc8ff; color: #e8f4ff; font-size: 14px; font-weight: bold; }
 .pill:hover { background: rgba(92, 200, 255, 0.15); text-decoration: none; }
