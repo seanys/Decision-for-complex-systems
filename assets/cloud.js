@@ -2,15 +2,16 @@
 (function () {
   const D = window.DGPG_CLOUD;
   const { el, lineChart } = window.Plot;
+  const { t } = window.I18N;
   const N = D.meta.n_servers;
   const T = D.meta.display_steps;
   const generation = D.servers.generation;
   const policies = { baseline: D.baseline, dgpg: D.dgpg };
   const colors = { baseline: "#DD8452", dgpg: "#4C72B0", reward: "#8172B3" };
-  const names = { baseline: "Distributed heuristic", dgpg: "With AI control" };
+  const names = { baseline: t("Distributed heuristic"), dgpg: t("With AI control") };
   // Generations from the most to the least efficient.
   const genOrder = [2, 1, 0];
-  const genNames = { 2: "New", 1: "Mid", 0: "Old" };
+  const genNames = { 2: t("New"), 1: t("Mid"), 0: t("Old") };
   const range = (n) => Array.from({ length: n }, (_, i) => i);
   const steps = range(T).map((t) => t + 1);
 
@@ -36,7 +37,7 @@
   // ---------- Problem diagram ----------
   (function drawProblem() {
     const INK = "#1f2328", MUTED = "#5b6370", BLUE = "#4C72B0", SOFT = "#f6f7f9", ORANGE = "#DD8452";
-    const svg = el("svg", { viewBox: "0 20 1100 236", role: "img", "aria-label": "Problem setting", style: "max-width:1100px;margin:0 auto" }, document.getElementById("problem-diagram"));
+    const svg = el("svg", { viewBox: "0 20 1100 236", role: "img", "aria-label": t("Problem setting"), style: "max-width:1100px;margin:0 auto" }, document.getElementById("problem-diagram"));
     const text = (x, y, s, opts) => {
       const o = Object.assign({ size: 14, color: INK, anchor: "middle", weight: "normal" }, opts);
       el("text", { x, y, "text-anchor": o.anchor, "font-size": o.size, "font-weight": o.weight, style: `fill:${o.color}` }, svg).textContent = s;
@@ -45,8 +46,8 @@
     el("rect", { x: 20, y: 50, width: 180, height: 130, rx: 12, fill: SOFT, stroke: "#d8dbe0" }, svg);
     [[40, 70, 44, 18], [92, 66, 22, 40], [124, 70, 50, 18], [44, 104, 24, 44], [78, 120, 50, 18], [138, 100, 22, 46], [40, 156, 46, 14], [100, 150, 30, 18]].forEach(([x, y, w, h]) =>
       el("rect", { x, y, width: w, height: h, rx: 3, fill: "#fff", stroke: INK, "stroke-width": 1.5 }, svg));
-    text(110, 205, "Arriving jobs", { weight: "bold" });
-    text(110, 224, "demand rises and falls", { color: MUTED });
+    text(110, 205, t("Arriving jobs"), { weight: "bold" });
+    text(110, 224, t("demand rises and falls"), { color: MUTED });
 
     // Dispatchers, one per arriving job.
     const dispatcherY = [70, 115, 160];
@@ -57,12 +58,12 @@
       text(290, y + 7, "AI", { size: 12, color: "#fff", weight: "bold" });
       el("path", { d: `M310,${y + 2} C380,${y + 2} 400,115 470,115`, fill: "none", stroke: INK, "stroke-width": 1.5 }, svg);
     });
-    text(290, 205, "Dispatchers", { weight: "bold" });
-    text(290, 224, "one per arriving job", { color: MUTED });
+    text(290, 205, t("Dispatchers"), { weight: "bold" });
+    text(290, 224, t("one per arriving job"), { color: MUTED });
 
     // Server groups with queues in front.
     el("line", { x1: 470, y1: 60, x2: 470, y2: 175, stroke: INK, "stroke-width": 5, "stroke-linecap": "round" }, svg);
-    const groups = [["New", "efficient", 3], ["Mid", "", 3], ["Old", "slow", 2]];
+    const groups = [[genNames[2], t("efficient"), 3], [genNames[1], "", 3], [genNames[0], t("slow"), 2]];
     groups.forEach(([name, sub, racks], g) => {
       const x0 = 540 + g * 190;
       el("line", { x1: 470, y1: 115, x2: x0 - 20, y2: 115, stroke: INK, "stroke-width": 1.5 }, svg);
@@ -74,7 +75,7 @@
       }
       text(x0 + 55, 182, name + (sub ? ` · ${sub}` : ""), { weight: "bold" });
     });
-    text(785, 224, "Servers differ in capacity and efficiency; jobs queue when a server is full", { color: MUTED });
+    text(785, 224, t("Servers differ in capacity and efficiency; jobs queue when a server is full"), { color: MUTED });
   })();
 
   // ---------- Server panels: utilization (bottom) and queued jobs (top) ----------
@@ -86,12 +87,12 @@
   const rowH = 2 * half + 4;
   const panels = {};
   for (const key of Object.keys(policies)) {
-    const svg = el("svg", { viewBox: `0 0 ${panelWidth} ${rowsByGen.length * (rowH + rowGap)}`, role: "img", "aria-label": "Server utilization and queues", style: `max-width:${panelWidth}px` }, document.getElementById("servers-" + key));
+    const svg = el("svg", { viewBox: `0 0 ${panelWidth} ${rowsByGen.length * (rowH + rowGap)}`, role: "img", "aria-label": t("Server utilization and queues"), style: `max-width:${panelWidth}px` }, document.getElementById("servers-" + key));
     const util = [], queue = [], count = [];
     rowsByGen.forEach((members, r) => {
       const y0 = r * (rowH + rowGap);
       el("text", { x: 0, y: y0 + half + 6, class: "legend-label" }, svg).textContent = genNames[genOrder[r]];
-      el("text", { x: 0, y: y0 + half + 22, class: "tick-label", style: "fill:#5b6370" }, svg).textContent = `${members.length} servers`;
+      el("text", { x: 0, y: y0 + half + 22, class: "tick-label", style: "fill:#5b6370" }, svg).textContent = t("{n} servers", { n: members.length });
       members.forEach((i, c) => {
         const x = labelW + c * colW;
         el("rect", { x, y: y0, width: barW, height: half, fill: "#fdf5ef" }, svg);
@@ -122,28 +123,28 @@
   const reduction = (key, series) => {
     if (key === "baseline" || k === 0 || D.baseline[series][k] <= 0) return "";
     const change = 100 * (1 - D.dgpg[series][k] / D.baseline[series][k]);
-    return `<em class="delta${change >= 0 ? "" : " worse"}">${change >= 0 ? "−" : "+"}${Math.abs(change).toFixed(0)} % vs heuristic</em>`;
+    return `<em class="delta${change >= 0 ? "" : " worse"}">${t("{change} % vs heuristic", { change: `${change >= 0 ? "−" : "+"}${Math.abs(change).toFixed(0)}` })}</em>`;
   };
   function drawKpis(key) {
     const p = policies[key];
     const now = k === 0 ? 0 : p.jobs_queued[k - 1];
     document.getElementById("kpi-" + key).innerHTML =
-      `<div class="kpi"><span>Jobs queued at servers</span><strong>${now.toFixed(0)}</strong></div>` +
-      `<div class="kpi"><span>Mean jobs queued so far</span><strong>${p.meanQueued[k].toFixed(1)}</strong>${reduction(key, "meanQueued")}</div>` +
-      `<div class="kpi"><span>Energy per unit of work so far</span><strong>${k === 0 ? "–" : p.meanEnergy[k].toFixed(3)}</strong>${reduction(key, "meanEnergy")}</div>`;
+      `<div class="kpi"><span>${t("Jobs queued at servers")}</span><strong>${now.toFixed(0)}</strong></div>` +
+      `<div class="kpi"><span>${t("Mean jobs queued so far")}</span><strong>${p.meanQueued[k].toFixed(1)}</strong>${reduction(key, "meanQueued")}</div>` +
+      `<div class="kpi"><span>${t("Energy per unit of work so far")}</span><strong>${k === 0 ? "–" : p.meanEnergy[k].toFixed(3)}</strong>${reduction(key, "meanEnergy")}</div>`;
   }
 
   // ---------- Time-series charts ----------
   const xDomain = [0, T];
   const queuedChart = lineChart(document.getElementById("chart-queued"), {
-    xDomain, xLabel: "Step", yLabel: "Jobs queued at servers",
+    xDomain, xLabel: t("Step"), yLabel: t("Jobs queued at servers"),
     series: [
       { x: steps, y: D.baseline.jobs_queued, color: colors.baseline, label: names.baseline },
       { x: steps, y: D.dgpg.jobs_queued, color: colors.dgpg, label: names.dgpg },
     ],
   });
   const energyChart = lineChart(document.getElementById("chart-energy"), {
-    xDomain, xLabel: "Step", yLabel: "Energy per unit of work", yFormat: (v) => v.toFixed(3),
+    xDomain, xLabel: t("Step"), yLabel: t("Energy per unit of work"), yFormat: (v) => v.toFixed(3),
     series: [
       { x: steps, y: D.baseline.energy_per_work, color: colors.baseline, label: names.baseline },
       { x: steps, y: D.dgpg.energy_per_work, color: colors.dgpg, label: names.dgpg },
@@ -158,8 +159,10 @@
     return ((100 * sum) / (members.length * policies[key].util.length)).toFixed(0);
   };
   document.getElementById("outcome").textContent =
-    `Over ${T} steps, AI control moves work from old servers (utilization ${genUtil("baseline", 0)} % → ${genUtil("dgpg", 0)} %) to new servers (${genUtil("baseline", 2)} % → ${genUtil("dgpg", 2)} %), ` +
-    `with ${cut("meanQueued")} % fewer jobs queued at servers and ${cut("meanEnergy")} % lower energy per unit of work.`;
+    t("Over {steps} steps, AI control moves work from old servers (utilization {oldBefore} % → {oldAfter} %) to new servers ({newBefore} % → {newAfter} %), with {queued} % fewer jobs queued at servers and {energy} % lower energy per unit of work.", {
+      steps: T, oldBefore: genUtil("baseline", 0), oldAfter: genUtil("dgpg", 0), newBefore: genUtil("baseline", 2), newAfter: genUtil("dgpg", 2),
+      queued: cut("meanQueued"), energy: cut("meanEnergy"),
+    });
 
   // ---------- Training: shared advantage and guidance per dispatcher ----------
   const S = D.signals;
@@ -177,27 +180,27 @@
   const signalCharts = [
     lineChart(document.getElementById("chart-signal-reward"), {
       height: 190, xDomain, yDomain: [-1, 1], yLabel: "A(t)", zeroLine: true,
-      series: [{ x: steps, y: [], color: colors.reward, label: "Shared advantage A(t), same for all dispatchers", width: 1.1, static: true }],
+      series: [{ x: steps, y: [], color: colors.reward, label: t("Shared advantage A(t), same for all dispatchers"), width: 1.1, static: true }],
     }),
     lineChart(document.getElementById("chart-signal-guide"), {
-      height: 210, xDomain, yDomain: [-1, 1], xLabel: "Step", yLabel: "−ĝᵢ(t)", zeroLine: true,
-      series: [{ x: steps, y: [], color: colors.dgpg, label: "Guidance −ĝᵢ(t) of this dispatcher", width: 1.1, static: true }],
+      height: 210, xDomain, yDomain: [-1, 1], xLabel: t("Step"), yLabel: "−ĝᵢ(t)", zeroLine: true,
+      series: [{ x: steps, y: [], color: colors.dgpg, label: t("Guidance −ĝᵢ(t) of this dispatcher"), width: 1.1, static: true }],
     }),
   ];
   const barCharts = [
     lineChart(document.getElementById("chart-bars-reward"), {
       height: 190, xDomain: [0.5, N + 0.5], yDomain: [-1, 1], yLabel: "A(t)", zeroLine: true,
-      series: [{ x: [], y: [], color: colors.reward, label: "Shared advantage A(t)" }],
+      series: [{ x: [], y: [], color: colors.reward, label: t("Shared advantage A(t)") }],
     }),
     lineChart(document.getElementById("chart-bars-guide"), {
-      height: 210, xDomain: [0.5, N + 0.5], yDomain: [-1, 1], xLabel: "Dispatcher", yLabel: "−ĝᵢ(t)", zeroLine: true,
-      series: [{ x: [], y: [], color: colors.dgpg, label: "Guidance −ĝᵢ(t)" }],
+      height: 210, xDomain: [0.5, N + 0.5], yDomain: [-1, 1], xLabel: t("Dispatcher"), yLabel: "−ĝᵢ(t)", zeroLine: true,
+      series: [{ x: [], y: [], color: colors.dgpg, label: t("Guidance −ĝᵢ(t)") }],
     }),
   ];
   const bw = barCharts[0].w / N;
   const barRects = barCharts.map((chart, c) => range(N).map((i) => {
     const rect = el("rect", { width: bw * 0.7, fill: c === 0 ? colors.reward : colors.dgpg, style: "cursor:pointer" }, chart.dataLayer);
-    el("title", {}, rect).textContent = `Dispatcher ${i + 1}`;
+    el("title", {}, rect).textContent = t("Dispatcher {n}", { n: i + 1 });
     rect.addEventListener("click", () => selectDispatcher(i));
     return rect;
   }));
@@ -207,7 +210,7 @@
   function drawSignals() {
     const s = +stepInput.value;
     document.getElementById("signal-step-out").textContent = `${s + 1}`;
-    document.getElementById("signal-title").textContent = `Dispatcher ${selected + 1} during training`;
+    document.getElementById("signal-title").textContent = t("Dispatcher {n} during training", { n: selected + 1 });
     [sharedFor(selected), forDispatcher(selected)].forEach((values, c) => {
       signalCharts[c].setYDomain(symmetric(values));
       signalCharts[c].setSeries(0, steps, values);
@@ -242,7 +245,7 @@
   }
   const activeRows = (values) => values.map((v, t) => (Array.isArray(v) ? v : new Array(nActive[t]).fill(v))).filter((row) => row.length > 0);
   document.getElementById("spread-note").textContent =
-    `Variation that differs between dispatchers: A ${spreadShare(activeRows(A)).toFixed(1)} %, ĝᵢ ${spreadShare(activeRows(guidance)).toFixed(1)} %.`;
+    t("Variation that differs between dispatchers: A {a} %, ĝᵢ {g} %.", { a: spreadShare(activeRows(A)).toFixed(1), g: spreadShare(activeRows(guidance)).toFixed(1) });
   stepInput.addEventListener("input", drawSignals);
   function selectDispatcher(i) {
     selected = i;
@@ -254,15 +257,15 @@
   const heuristic = D.meta.baseline_test;
   const lastEpisode = curve[curve.length - 1].episode;
   const curveSpecs = [
-    ["chart-curve-queued", "jobs_queued", "Mean jobs queued"],
-    ["chart-curve-energy", "energy_per_work", "Energy per unit of work"],
+    ["chart-curve-queued", "jobs_queued", t("Mean jobs queued")],
+    ["chart-curve-energy", "energy_per_work", t("Energy per unit of work")],
   ];
   const curveCharts = curveSpecs.map(([id, field, label], c) => {
     const values = curve.map((row) => row[field]).concat(heuristic[field]);
     const lo = field === "jobs_queued" ? 0 : Math.floor(Math.min(...values) * 100) / 100 - 0.01;
     const hi = field === "jobs_queued" ? Math.ceil((Math.max(...values) * 1.1) / 5) * 5 : Math.ceil(Math.max(...values) * 100) / 100 + 0.01;
     const chart = lineChart(document.getElementById(id), {
-      height: 200, xDomain: [0, lastEpisode], yDomain: [lo, hi], xLabel: c === 1 ? "Training episode" : "", yLabel: label,
+      height: 200, xDomain: [0, lastEpisode], yDomain: [lo, hi], xLabel: c === 1 ? t("Training episode") : "", yLabel: label,
       yFormat: field === "jobs_queued" ? undefined : (v) => v.toFixed(2),
       series: [
         { x: curve.map((row) => row.episode), y: curve.map((row) => row[field]), color: colors.dgpg, label: names.dgpg, static: true },
@@ -275,15 +278,15 @@
     return chart;
   });
   document.getElementById("curve-note").textContent =
-    `Mean over the first ${T} steps of 10 test scenarios.`;
+    t("Mean over the first {steps} steps of 10 test scenarios.", { steps: T });
 
   // The vertical scale follows the selected episode; early policies queue thousands of jobs.
   const progressTop = (item) => Math.ceil((Math.max(...D.baseline.jobs_queued, ...item.jobs_queued) * 1.05) / 10) * 10;
   const progressChart = lineChart(document.getElementById("chart-progress"), {
-    xDomain, yDomain: [0, progressTop(D.progress[0])], xLabel: "Step", yLabel: "Jobs queued at servers",
+    xDomain, yDomain: [0, progressTop(D.progress[0])], xLabel: t("Step"), yLabel: t("Jobs queued at servers"),
     series: [
       { x: steps, y: D.baseline.jobs_queued, color: colors.baseline, label: names.baseline, opacity: 0.7, static: true },
-      { x: steps, y: D.progress[0].jobs_queued, color: colors.dgpg, label: "AI after this episode", static: true },
+      { x: steps, y: D.progress[0].jobs_queued, color: colors.dgpg, label: t("AI after this episode"), static: true },
     ],
   });
   const episodeInput = document.getElementById("episode");
@@ -307,7 +310,7 @@
   slider.max = T;
   function drawFrame() {
     slider.value = k;
-    document.getElementById("clock").textContent = `Step ${k} / ${T}`;
+    document.getElementById("clock").textContent = t("Step {k} / {total}", { k, total: T });
     for (const key of Object.keys(policies)) { drawServers(key); drawKpis(key); }
     queuedChart.setReveal(k - 1);
     energyChart.setReveal(k - 1);
@@ -328,7 +331,7 @@
   }
   function setPlaying(value) {
     playing = value;
-    playButton.textContent = playing ? "Pause" : k >= T ? "Replay" : k !== START ? "Resume" : "Start";
+    playButton.textContent = t(playing ? "Pause" : k >= T ? "Replay" : k !== START ? "Resume" : "Start");
     if (playing) {
       if (k >= T) k = START;
       last = null;

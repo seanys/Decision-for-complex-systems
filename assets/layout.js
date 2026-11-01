@@ -3,15 +3,17 @@
 //   <script src="assets/layout.js" data-part="footer"></script>
 // The markup is inserted synchronously in place of the tag, so it renders before first paint.
 (() => {
-  const SITE = "AI for Complex Systems";
+  const { t } = window.I18N;
+  const SITE = t("AI for Complex Systems");
   const EMAIL = "yang-shan@nus.edu.sg";
   const HOMEPAGE = "https://seanys.github.io/";
   const TUTORIAL = "https://seanys.github.io/blog/2026/why-we-need-analytical-models-to-guide-training-for-scalable-multi-agent-learning/";
   const SCENARIOS = [
-    ["power.html", "Power generation control"],
-    ["cloud.html", "Cloud job scheduling"],
-    ["voltage.html", "Distribution voltage control"],
-    ["rebalancing.html", "Robotaxi fleet rebalancing"],
+    ["power.html", t("Power generation control")],
+    ["cloud.html", t("Cloud job scheduling")],
+    ["voltage.html", t("Distribution voltage control")],
+    ["rebalancing.html", t("Robotaxi fleet rebalancing")],
+    // Hidden for now: ["routing.html", t("Connected vehicle routing")],
   ];
   const SOCIAL = [
     ["https://github.com/seanys", "GitHub", '<path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>'],
@@ -30,10 +32,10 @@
       <a class="header-brand" href="index.html">${SITE}</a>
       <nav class="header-nav" aria-label="Site">
         <details class="nav-menu">
-          <summary>Scenarios</summary>
+          <summary>${t("Scenarios")}</summary>
           <div class="nav-menu-list">${scenarioLinks}</div>
         </details>
-        <a href="${TUTORIAL}">Tutorial</a>
+        <div data-lang-switch></div>
       </nav>
     </div>
   </header>`;
@@ -43,27 +45,27 @@
     <div class="footer-inner">
       <div class="footer-brand">
         <p class="footer-title">${SITE}</p>
-        <p>Interactive scenarios of AI agents making real-time decisions in large systems.</p>
+        <p>${t("Interactive scenarios of AI agents making real-time decisions in large systems.")}</p>
       </div>
       <nav class="footer-col" aria-label="Scenarios">
-        <p class="footer-head">Scenarios</p>
+        <p class="footer-head">${t("Scenarios")}</p>
         ${scenarioLinks}
       </nav>
       <nav class="footer-col" aria-label="Resources">
-        <p class="footer-head">Resources</p>
-        <a href="${HOMEPAGE}">Homepage</a>
-        <a href="${TUTORIAL}">Tutorial</a>
+        <p class="footer-head">${t("Resources")}</p>
+        <a href="${HOMEPAGE}">${t("Homepage")}</a>
+        <a href="${TUTORIAL}">${t("Tutorial")}</a>
       </nav>
       <div class="footer-col footer-contact">
-        <p class="footer-head">Contact</p>
+        <p class="footer-head">${t("Contact")}</p>
         <a class="footer-email" href="mailto:${EMAIL}"><svg viewBox="0 0 16 16" aria-hidden="true">${MAIL_ICON}</svg>${EMAIL}</a>
         <div class="footer-icons">${SOCIAL.map(([href, label, path]) =>
           `<a href="${href}" title="${label}" aria-label="${label}"><svg viewBox="0 0 16 16">${path}</svg></a>`).join("")}</div>
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© Copyright 2026 <a href="${HOMEPAGE}">YANG Shan</a>.</span>
-      <a href="#">Back to top ↑</a>
+      <span>${t("© Copyright 2026 {name}.", { name: `<a href="${HOMEPAGE}">YANG Shan</a>` })}</span>
+      <a href="#">${t("Back to top ↑")}</a>
     </div>
   </footer>`;
 
@@ -72,9 +74,23 @@
   script.insertAdjacentHTML("beforebegin", part === "header" ? header : footer);
 
   if (part === "header") {
+    window.I18N.mountSwitches();
     // Close the scenarios menu on an outside click or Escape.
     const menu = script.previousElementSibling.querySelector(".nav-menu");
     document.addEventListener("click", (event) => { if (!menu.contains(event.target)) menu.open = false; });
     document.addEventListener("keydown", (event) => { if (event.key === "Escape") menu.open = false; });
+  } else {
+    // The page content is now parsed: translate its static text before the page scripts run.
+    window.I18N.apply();
+
+    // Formulas and problem diagrams scroll sideways on narrow screens; fade their right edge while more is hidden.
+    const cue = () => document.querySelectorAll(".step-formula, #problem-diagram").forEach((box) => {
+      box.classList.toggle("more-right", box.scrollWidth - box.clientWidth - box.scrollLeft > 2);
+    });
+    window.addEventListener("load", cue);
+    window.addEventListener("resize", cue);
+    document.addEventListener("scroll", (event) => {
+      if (event.target.matches && event.target.matches(".step-formula, #problem-diagram")) cue();
+    }, true);
   }
 })();

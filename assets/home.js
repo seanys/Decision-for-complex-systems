@@ -121,6 +121,14 @@
     el("path", { d: "M128,68 L162,100", stroke: GLOW, "stroke-width": 2.4, class: "flow", fill: "none" }, g);
     el("path", { d: "M120,68 L84,68", stroke: GLOW, "stroke-width": 2.4, class: "flow", fill: "none" }, g);
   });
+  tile("thumb-routing", (g) => {
+    const P = { 1: [62, 16], 12: [112, 16], 4: [22, 54], 5: [62, 54], 6: [112, 54], 7: [162, 54], 8: [212, 54], 9: [62, 92], 10: [112, 92], 11: [162, 92], 2: [212, 92], 13: [112, 126], 3: [162, 126] };
+    const E = [[1, 5], [1, 12], [4, 5], [4, 9], [5, 6], [5, 9], [6, 7], [6, 10], [7, 8], [7, 11], [8, 2], [9, 10], [9, 13], [10, 11], [11, 2], [11, 3], [12, 6], [12, 8], [13, 3]];
+    E.forEach(([a, b]) => el("line", { x1: P[a][0], y1: P[a][1], x2: P[b][0], y2: P[b][1] }, g));
+    el("path", { d: `M${P[4]} L${P[5]} L${P[6]} L${P[7]} L${P[11]} L${P[3]}`, stroke: GLOW, "stroke-width": 2.6, class: "flow", fill: "none" }, g);
+    el("path", { d: "M112,62 L118,73 L106,73 Z", fill: "#e0a526", stroke: "none" }, g);
+    Object.values(P).forEach(([x, y]) => el("circle", { cx: x, cy: y, r: 4.2, fill: "#0b1d36" }, g));
+  });
   tile("thumb-more", (g) => { icons.trafficLight(g, 60, 25, 1); icons.transformer(g, 150, 70, 1.2); }, "0 0 220 120");
 
 })();

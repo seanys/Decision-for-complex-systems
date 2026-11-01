@@ -2,23 +2,26 @@
 (function () {
   const D = window.DGPG_REBALANCING;
   const { el, lineChart } = window.Plot;
+  const { t, locale } = window.I18N;
   const N = D.meta.n_regions;
   const COLS = D.meta.cols;
   const T = D.meta.horizon_steps;
   const step = D.meta.step_minutes;
   const colors = { baseline: "#DD8452", dgpg: "#4C72B0", lost: "#C44E52", reward: "#8172B3", car: "#1f2328" };
   const patternColors = { commute: "#55A868", reverse: "#8172B3", event: "#CCB974" };
-  const names = { baseline: "Planned rebalancing", dgpg: "With AI rebalancing" };
-  const districts = ["North-west", "North", "North-east", "West", "Centre", "East", "South-west", "South", "South-east"];
+  const names = { baseline: t("Planned rebalancing"), dgpg: t("With AI rebalancing") };
+  const districts = ["North-west", "North", "North-east", "West", "Centre", "East", "South-west", "South", "South-east"].map((name) => t(name));
   const range = (n) => Array.from({ length: n }, (_, i) => i);
   const sum = (a) => a.reduce((s, v) => s + v, 0);
 
   const kind = (p) => (p === 0 ? "commute" : p === 1 ? "reverse" : "event");
-  const patternShort = (p) => (p === 0 ? "Commute" : p === 1 ? "Reverse commute" : `Event · ${districts[p - 2]}`);
+  const patternShort = (p) => (p === 0 ? t("Commute") : p === 1 ? t("Reverse commute") : t("Event · {district}", { district: districts[p - 2] }));
+  // Label for a short segment of the demand timeline.
+  const patternTiny = (p) => (p === 0 ? t("Commute") : p === 1 ? t("Reverse") : t("Event"));
   const patternLong = (p) => p === 0
-    ? "Commute: riders travel from the outskirts to the centre and the south-east"
-    : p === 1 ? "Reverse commute: riders travel back to the outskirts"
-      : `Event ending in the ${districts[p - 2].toLowerCase()} district: many riders leave it at once`;
+    ? t("Commute: riders travel from the outskirts to the centre and the south-east")
+    : p === 1 ? t("Reverse commute: riders travel back to the outskirts")
+      : t("Event ending in the {district} district: many riders leave it at once", { district: districts[p - 2].toLowerCase() });
   const fmtClock = (k) => {
     const m = k * step;
     return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`;
@@ -40,9 +43,9 @@
   let speed = 2;
 
   document.getElementById("episode-note").textContent =
-    `Six hours in a city of ${N} districts served by ${D.meta.fleet} robotaxis, with about ${Math.round(D.meta.total_demand * 12)} ride requests per hour. ` +
-    `Demand switches between a commute pattern, its reverse and events that send many riders out of one district. ` +
-    `Both cities see exactly the same requests; this episode was not used in training.`;
+    t("Six hours in a city of {districts} districts served by {fleet} robotaxis, with about {requests} ride requests per hour. Demand switches between a commute pattern, its reverse and events that send many riders out of one district.", {
+      districts: N, fleet: D.meta.fleet, requests: Math.round(D.meta.total_demand * 12),
+    });
 
   // ---------- City geometry shared by all maps ----------
   const S = 176, G = 26, M = 10, SIZE = 3 * S + 2 * G + 2 * M;
@@ -69,7 +72,7 @@
   // ---------- Problem diagram ----------
   (function drawProblem() {
     const INK = "#1f2328", MUTED = "#5b6370";
-    const svg = el("svg", { viewBox: "0 0 1100 270", role: "img", "aria-label": "Problem setting", style: "max-width:1100px;margin:0 auto" }, document.getElementById("problem-diagram"));
+    const svg = el("svg", { viewBox: "0 0 1100 270", role: "img", "aria-label": t("Problem setting"), style: "max-width:1100px;margin:0 auto" }, document.getElementById("problem-diagram"));
     arrowMarker(svg, "problem-arrow", colors.dgpg);
     const text = (x, y, s, opts) => {
       const o = Object.assign({ size: 14, color: INK, anchor: "middle", weight: "normal" }, opts);
@@ -92,22 +95,22 @@
       el("path", { d: `M${x1 + (x2 - x1) * 0.28},${y1 + (y2 - y1) * 0.28} L${x1 + (x2 - x1) * 0.7},${y1 + (y2 - y1) * 0.7}`, stroke: colors.dgpg, "stroke-width": 4, class: "flow", "marker-end": "url(#problem-arrow)", fill: "none" }, svg);
     }
     const tx = 400;
-    text(tx, 52, "Trips pile robotaxis up where riders go", { anchor: "start", size: 18, weight: "bold" });
-    text(tx, 76, "Riders flow from some districts to others, so idle robotaxis gather where trips end and run short where trips begin.", { anchor: "start", color: MUTED });
-    text(tx, 124, "A rider who finds no robotaxi is lost", { anchor: "start", size: 18, weight: "bold", color: colors.lost });
-    text(tx, 148, "A request is served only by an idle robotaxi in the rider's own district; otherwise the rider leaves.", { anchor: "start", color: MUTED });
-    text(tx, 196, "Each district sends idle robotaxis ahead of demand", { anchor: "start", size: 18, weight: "bold", color: colors.dgpg });
-    text(tx, 220, "An empty robotaxi takes 5 to 20 minutes to reach another district, so it must leave before the riders appear.", { anchor: "start", color: MUTED });
+    text(tx, 52, t("Trips pile robotaxis up where riders go"), { anchor: "start", size: 18, weight: "bold" });
+    text(tx, 76, t("Riders flow from some districts to others, so idle robotaxis gather where trips end and run short where trips begin."), { anchor: "start", color: MUTED });
+    text(tx, 124, t("A rider who finds no robotaxi is lost"), { anchor: "start", size: 18, weight: "bold", color: colors.lost });
+    text(tx, 148, t("A request is served only by an idle robotaxi in the rider's own district; otherwise the rider leaves."), { anchor: "start", color: MUTED });
+    text(tx, 196, t("Each district sends idle robotaxis ahead of demand"), { anchor: "start", size: 18, weight: "bold", color: colors.dgpg });
+    text(tx, 220, t("An empty robotaxi takes 5 to 20 minutes to reach another district, so it must leave before the riders appear."), { anchor: "start", color: MUTED });
   })();
 
   // ---------- Demand timeline ----------
   const timeline = (function drawTimeline() {
     const box = document.getElementById("timeline");
-    const W = Math.max(600, box.clientWidth), H = 190;
+    const W = Math.max(320, box.clientWidth), H = 190;
     const left = 92, right = 12, top = 6, band = 30, mid = 112, amp = 62;
     const w = W - left - right;
     const sx = (t) => left + (t / (T + 1)) * w;
-    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Demand patterns and riders without a car over the episode", style: "cursor:pointer" }, box);
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": t("Demand patterns and riders without a car over the episode"), style: "cursor:pointer" }, box);
     // Pattern segments.
     let start = 0;
     for (let t = 1; t <= T + 1; t++) {
@@ -116,7 +119,7 @@
         el("rect", { x: sx(start) + 1, y: top, width: sx(t) - sx(start) - 2, height: band, rx: 5, fill: patternColors[kind(p)], opacity: 0.85 }, svg);
         const label = el("text", { x: (sx(start) + sx(t)) / 2, y: top + 20, "text-anchor": "middle", "font-size": 13, style: "fill:#fff;font-weight:bold" }, svg);
         const width = sx(t) - sx(start);
-        label.textContent = width > 110 ? patternShort(p) : width > 54 ? (p >= 2 ? "Event" : patternShort(p).split(" ")[0]) : "";
+        label.textContent = width > 110 ? patternShort(p) : width > 54 ? patternTiny(p) : "";
         start = t;
       }
     }
@@ -129,9 +132,9 @@
       el("rect", { x: sx(t) + 0.6, y: mid, width: bw - 1.2, height: hd, fill: colors.dgpg }, svg);
     });
     el("line", { x1: left, x2: W - right, y1: mid, y2: mid, stroke: "#1f2328", "stroke-width": 1 }, svg);
-    el("text", { x: left - 10, y: mid - 26, "text-anchor": "end", class: "tick-label", style: `fill:${colors.baseline};font-weight:bold` }, svg).textContent = "Planned";
-    el("text", { x: left - 10, y: mid + 34, "text-anchor": "end", class: "tick-label", style: `fill:${colors.dgpg};font-weight:bold` }, svg).textContent = "With AI";
-    el("text", { x: left - 10, y: top + 20, "text-anchor": "end", class: "tick-label" }, svg).textContent = "Demand";
+    el("text", { x: left - 10, y: mid - 26, "text-anchor": "end", class: "tick-label", style: `fill:${colors.baseline};font-weight:bold` }, svg).textContent = t("Planned");
+    el("text", { x: left - 10, y: mid + 34, "text-anchor": "end", class: "tick-label", style: `fill:${colors.dgpg};font-weight:bold` }, svg).textContent = t("With AI");
+    el("text", { x: left - 10, y: top + 20, "text-anchor": "end", class: "tick-label" }, svg).textContent = t("Demand");
     for (let h = 0; h <= 6; h++) {
       const x = sx(h * 60 / step);
       el("line", { x1: x, x2: x, y1: H - 14, y2: H - 10, stroke: "#000" }, svg);
@@ -150,7 +153,7 @@
   // ---------- City maps ----------
   const PITCH = 7, CAR_R = 2.5, CAR_COLS = 22, CAR_ROWS = 14;
   function cityMap(key) {
-    const svg = el("svg", { viewBox: `0 0 ${SIZE} ${SIZE}`, role: "img", "aria-label": `City ${names[key]}` }, document.getElementById("city-" + key));
+    const svg = el("svg", { viewBox: `0 0 ${SIZE} ${SIZE}`, role: "img", "aria-label": t("City {policy}", { policy: names[key] }) }, document.getElementById("city-" + key));
     arrowMarker(svg, `dispatch-${key}`, colors[key]);
     el("rect", { width: SIZE, height: SIZE, rx: 16, fill: "#dfe3e9" }, svg);
     const blocks = range(N).map((i) => {
@@ -171,10 +174,10 @@
       const p = policies[key];
       range(N).forEach((i) => {
         const b = blocks[i], n = p.available[frame][i], lost = p.lost[frame][i], req = requests[frame][i];
-        b.carCount.textContent = `${n} idle`;
+        b.carCount.textContent = t("{n} idle", { n });
         b.cars.forEach((car, c) => car.setAttribute("visibility", c < n ? "visible" : "hidden"));
-        b.lostText.textContent = lost > 0 ? `${lost} riders without a car` : "";
-        b.reqText.textContent = `${req} ride requests`;
+        b.lostText.textContent = lost > 0 ? t("{n} riders without a car", { n: lost }) : "";
+        b.reqText.textContent = t("{n} ride requests", { n: req });
         b.tint.setAttribute("opacity", req > 0 ? Math.min(0.42, 0.6 * lost / req) : 0);
       });
       dispatchLayer.replaceChildren();
@@ -194,10 +197,10 @@
   }
   const maps = { baseline: cityMap("baseline"), dgpg: cityMap("dgpg") };
   document.getElementById("city-legend").innerHTML =
-    `<span><i style="background:${colors.car};height:6px;width:6px;border-radius:50%"></i>Idle robotaxi</span>` +
-    `<span><i style="background:${colors.lost};opacity:.45;height:12px;width:14px;border-radius:3px"></i>District where riders find no car</span>` +
-    `<span><i style="background:${colors.baseline};height:4px;width:18px"></i>Empty robotaxis sent by the fixed plan</span>` +
-    `<span><i style="background:${colors.dgpg};height:4px;width:18px"></i>Empty robotaxis sent by the AI (largest groups in these 5 minutes)</span>`;
+    `<span><i style="background:${colors.car};height:6px;width:6px;border-radius:50%"></i>${t("Idle robotaxi")}</span>` +
+    `<span><i style="background:${colors.lost};opacity:.45;height:12px;width:14px;border-radius:3px"></i>${t("District where riders find no car")}</span>` +
+    `<span><i style="background:${colors.baseline};height:4px;width:18px"></i>${t("Empty robotaxis sent by the fixed plan")}</span>` +
+    `<span><i style="background:${colors.dgpg};height:4px;width:18px"></i>${t("Empty robotaxis sent by the AI (largest groups in these 5 minutes)")}</span>`;
 
   // ---------- KPIs ----------
   function drawKpis(key) {
@@ -207,17 +210,19 @@
     let delta = `<em class="delta">&nbsp;</em>`;
     if (key === "dgpg" && D.baseline.lostSoFar[k] > 0) {
       const change = 100 * (1 - p.lostSoFar[k] / D.baseline.lostSoFar[k]);
-      delta = `<em class="delta">${change >= 0 ? "−" : "+"}${Math.abs(change).toFixed(0)} % vs fixed plan</em>`;
+      delta = `<em class="delta">${t("{change} % vs fixed plan", { change: `${change >= 0 ? "−" : "+"}${Math.abs(change).toFixed(0)}` })}</em>`;
     }
     document.getElementById("kpi-" + key).innerHTML =
-      `<div class="kpi"><span>Riders served so far</span><strong>${served.toLocaleString("en-GB")}</strong></div>` +
-      `<div class="kpi"><span>Riders without a car so far</span><strong>${p.lostSoFar[k].toLocaleString("en-GB")}</strong>${delta}</div>` +
-      `<div class="kpi"><span>Share without a car</span><strong>${share.toFixed(1)} %</strong></div>`;
+      `<div class="kpi"><span>${t("Riders served so far")}</span><strong>${served.toLocaleString(locale)}</strong></div>` +
+      `<div class="kpi"><span>${t("Riders without a car so far")}</span><strong>${p.lostSoFar[k].toLocaleString(locale)}</strong>${delta}</div>` +
+      `<div class="kpi"><span>${t("Share without a car")}</span><strong>${share.toFixed(1)} %</strong></div>`;
   }
   const finalShare = (p) => (100 * p.lostSoFar[T]) / p.requestsSoFar[T];
   document.getElementById("outcome").textContent =
-    `Over the six hours, AI rebalancing lowers the share of riders without a car from ${finalShare(D.baseline).toFixed(1)} % to ${finalShare(D.dgpg).toFixed(1)} %. ` +
-    `Over ${D.meta.evaluation_episodes} held-out episodes, the share falls from ${D.meta.baseline_lost_percent.toFixed(1)} % to ${D.meta.final.lost_percent.toFixed(1)} %.`;
+    t("Over the six hours, AI rebalancing lowers the share of riders without a car from {before} % to {after} %. Over {episodes} held-out episodes, the share falls from {meanBefore} % to {meanAfter} %.", {
+      before: finalShare(D.baseline).toFixed(1), after: finalShare(D.dgpg).toFixed(1), episodes: D.meta.evaluation_episodes,
+      meanBefore: D.meta.baseline_lost_percent.toFixed(1), meanAfter: D.meta.final.lost_percent.toFixed(1),
+    });
 
   // ---------- Training: robotaxis 20 minutes ahead against the reference ----------
   const TR = D.training;
@@ -228,7 +233,7 @@
   guideStep.max = K - 1;
   guideStep.value = Math.floor(K / 4);
   const guide = (function guideCity() {
-    const svg = el("svg", { viewBox: `0 0 ${SIZE} ${SIZE}`, role: "img", "aria-label": "Robotaxis 20 minutes ahead and the reference" }, document.getElementById("guide-city"));
+    const svg = el("svg", { viewBox: `0 0 ${SIZE} ${SIZE}`, role: "img", "aria-label": t("Robotaxis 20 minutes ahead and the reference") }, document.getElementById("guide-city"));
     arrowMarker(svg, "guide-arrow", colors.dgpg);
     el("rect", { width: SIZE, height: SIZE, rx: 16, fill: "#dfe3e9" }, svg);
     const top = Math.max(...TR.state.flat(), ...TR.target.flat());
@@ -254,7 +259,7 @@
         b.bar.setAttribute("height", sy(x));
         b.ref.setAttribute("y", b.y + barTop + barH - sy(ref));
         b.ref.setAttribute("height", sy(ref));
-        b.values.textContent = `${x} vs ${Math.round(ref)}`;
+        b.values.textContent = t("{x} vs {ref}", { x, ref: Math.round(ref) });
         b.signal.textContent = `−ĝ = ${g >= 0 ? "+" : "−"}${Math.abs(g).toFixed(2)}`;
         b.signal.setAttribute("style", `pointer-events:none;fill:${g >= 0 ? "#3f8a52" : colors.lost}`);
         b.frame.setAttribute("stroke", i === selected ? colors.car : "transparent");
@@ -270,9 +275,9 @@
     };
   })();
   document.getElementById("guide-legend").innerHTML =
-    `<span><i style="background:${colors.dgpg};height:10px;width:12px;border-radius:2px"></i>Robotaxis 20 minutes ahead, x<sub>j</sub></span>` +
-    `<span><i style="border:1.6px dashed ${colors.car};height:10px;width:10px;border-radius:2px;background:none"></i>Reference x̃<sub>j</sub></span>` +
-    `<span><i style="background:${colors.dgpg};height:4px;width:18px"></i>Dispatch of the selected district</span>`;
+    `<span><i style="background:${colors.dgpg};height:10px;width:12px;border-radius:2px"></i>${t("Robotaxis 20 minutes ahead, x<sub>j</sub>")}</span>` +
+    `<span><i style="border:1.6px dashed ${colors.car};height:10px;width:10px;border-radius:2px;background:none"></i>${t("Reference x̃<sub>j</sub>")}</span>` +
+    `<span><i style="background:${colors.dgpg};height:4px;width:18px"></i>${t("Dispatch of the selected district")}</span>`;
 
   const minutes = range(K).map((t) => (t * step) / 60);
   const hourTick = (v) => `${Math.round(v)}:00`;
@@ -285,20 +290,21 @@
   const signalCharts = [
     lineChart(document.getElementById("chart-signal-reward"), {
       height: 200, xDomain: [0, T * step / 60], yDomain: symmetric(TR.reward_advantage), yLabel: "A(t)", zeroLine: true, xFormat: hourTick,
-      series: [{ x: minutes, y: TR.reward_advantage, color: colors.reward, label: "Shared advantage A(t), same for all districts", width: 1.2, static: true }],
+      series: [{ x: minutes, y: TR.reward_advantage, color: colors.reward, label: t("Shared advantage A(t), same for all districts"), width: 1.2, static: true }],
     }),
     lineChart(document.getElementById("chart-signal-guide"), {
-      height: 220, xDomain: [0, T * step / 60], yDomain: [-1, 1], xLabel: "Time in the training episode", yLabel: "−ĝᵢ(t)", zeroLine: true, xFormat: hourTick,
-      series: [{ x: minutes, y: [], color: colors.dgpg, label: "Guidance −ĝᵢ(t) of the selected district", width: 1.2, static: true }],
+      height: 220, xDomain: [0, T * step / 60], yDomain: [-1, 1], xLabel: t("Time in the training episode"), yLabel: "−ĝᵢ(t)", zeroLine: true, xFormat: hourTick,
+      series: [{ x: minutes, y: [], color: colors.dgpg, label: t("Guidance −ĝᵢ(t) of the selected district"), width: 1.2, static: true }],
     }),
   ];
   document.getElementById("signal-note").textContent =
-    `One training episode after ${TR.update * D.meta.rollouts_per_update} training episodes. A(t) rises and falls with how many riders the whole city loses, ` +
-    `while −ĝᵢ(t) scores only district i's own dispatch against the reference. Click a district on the left to select it.`;
+    t("One training episode after {episodes} training episodes. A(t) rises and falls with how many riders the whole city loses, while −ĝᵢ(t) scores only district i's own dispatch against the reference. Click a district on the left to select it.", {
+      episodes: TR.update * D.meta.rollouts_per_update,
+    });
   function drawGuide() {
     const s = +guideStep.value;
     document.getElementById("guide-step-out").textContent = `${fmtClock(s)} · ${patternShort(TR.pattern[s])}`;
-    document.getElementById("signal-title").textContent = `Learning signals of the ${districts[selected].toLowerCase()} district`;
+    document.getElementById("signal-title").textContent = t("Learning signals of the {district} district", { district: districts[selected].toLowerCase() });
     guide(s);
     const values = individual.map((row) => row[selected]);
     signalCharts[1].setYDomain(symmetric(values));
@@ -313,7 +319,7 @@
   const lastEpisodes = episodesOf(curve[curve.length - 1].update);
   const curveTop = Math.ceil(Math.max(D.meta.baseline_lost_percent, ...curve.map((c) => c.lost_percent)) / 5) * 5;
   const curveChart = lineChart(document.getElementById("chart-curve"), {
-    height: 260, xDomain: [0, lastEpisodes], yDomain: [0, curveTop], xLabel: "Training episodes", yLabel: "Riders without a car (%)",
+    height: 260, xDomain: [0, lastEpisodes], yDomain: [0, curveTop], xLabel: t("Training episodes"), yLabel: t("Riders without a car (%)"),
     series: [
       { x: curve.map((c) => episodesOf(c.update)), y: curve.map((c) => c.lost_percent), color: colors.dgpg, label: names.dgpg, static: true },
       { x: [0, lastEpisodes], y: [D.meta.baseline_lost_percent, D.meta.baseline_lost_percent], color: colors.baseline, dash: "5 4", label: names.baseline, static: true },
@@ -322,15 +328,15 @@
   curve.forEach((c) => el("circle", { cx: curveChart.sx(episodesOf(c.update)), cy: curveChart.sy(c.lost_percent), r: 3, fill: colors.dgpg }, curveChart.dataLayer));
   const marker = el("circle", { r: 6.5, fill: "none", stroke: colors.car, "stroke-width": 1.6 }, curveChart.dataLayer);
   document.getElementById("curve-note").textContent =
-    `Mean over ${D.meta.evaluation_episodes} held-out episodes of six hours; each training update uses ${D.meta.rollouts_per_update} episodes.`;
+    t("Mean over {episodes} held-out episodes of six hours; each training update uses {rollouts} episodes.", { episodes: D.meta.evaluation_episodes, rollouts: D.meta.rollouts_per_update });
 
   const frames = range(T + 1).map((t) => (t * step) / 60);
   const progressTop = Math.ceil(Math.max(...D.baseline.lostTotal) / 10) * 10;
   const progressChart = lineChart(document.getElementById("chart-progress"), {
-    height: 260, xDomain: [0, T * step / 60], yDomain: [0, progressTop], xLabel: "Time in the episode", yLabel: "Without a car per 5 min", xFormat: hourTick,
+    height: 260, xDomain: [0, T * step / 60], yDomain: [0, progressTop], xLabel: t("Time in the episode"), yLabel: t("Without a car per 5 min"), xFormat: hourTick,
     series: [
       { x: frames, y: D.baseline.lostTotal, color: colors.baseline, label: names.baseline, opacity: 0.7, static: true },
-      { x: frames, y: D.progress[0].lost, color: colors.dgpg, label: "AI after this training", static: true },
+      { x: frames, y: D.progress[0].lost, color: colors.dgpg, label: t("AI after this training"), static: true },
     ],
   });
   const episodeInput = document.getElementById("episode");
@@ -379,7 +385,7 @@
   }
   function setPlaying(value) {
     playing = value;
-    playButton.textContent = playing ? "Pause" : k >= T ? "Replay" : k !== START ? "Resume" : "Start";
+    playButton.textContent = t(playing ? "Pause" : k >= T ? "Replay" : k !== START ? "Resume" : "Start");
     if (playing) {
       if (k >= T) k = START;
       last = null;

@@ -2,13 +2,14 @@
 (function () {
   const D = window.DGPG_VOLTAGE;
   const { el, lineChart } = window.Plot;
+  const { t, locale } = window.I18N;
   const N = D.meta.n_inverters;
   const B = D.meta.n_buses;
   const T = D.meta.horizon_steps;
   const step = D.meta.step_minutes;
   const policies = { baseline: D.baseline, dgpg: D.dgpg };
   const colors = { baseline: "#DD8452", dgpg: "#4C72B0", reward: "#8172B3", pv: "#CCB974", load: "#1f2328" };
-  const names = { baseline: "Without control", dgpg: "With AI control" };
+  const names = { baseline: t("Without control"), dgpg: t("With AI control") };
   const vUpper = D.meta.v_upper, vLower = D.meta.v_lower;
 
   const hours = (k) => (D.meta.start_minutes + k * step) / 60;
@@ -36,12 +37,14 @@
 
   const date = new Date(D.meta.display_day + "T00:00:00");
   document.getElementById("day-note").textContent =
-    `A clear summer day (${date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}), 06:00 to 18:00, on a ${B}-bus distribution network with ${N} rooftop PV inverters. The day was not used in training.`;
+    t("A clear summer day ({date}), 06:00 to 18:00, on a {buses}-bus distribution network with {inverters} rooftop PV inverters.", {
+      date: date.toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" }), buses: B, inverters: N,
+    });
 
   // ---------- Problem diagram ----------
   (function drawProblem() {
     const INK = "#1f2328", MUTED = "#5b6370", BLUE = "#4C72B0", SOFT = "#f6f7f9", SUN = "#CCB974";
-    const svg = el("svg", { viewBox: "0 20 1100 240", role: "img", "aria-label": "Problem setting", style: "max-width:1100px;margin:0 auto" }, document.getElementById("problem-diagram"));
+    const svg = el("svg", { viewBox: "0 20 1100 240", role: "img", "aria-label": t("Problem setting"), style: "max-width:1100px;margin:0 auto" }, document.getElementById("problem-diagram"));
     const text = (x, y, s, opts) => {
       const o = Object.assign({ size: 14, color: INK, anchor: "middle", weight: "normal" }, opts);
       el("text", { x, y, "text-anchor": o.anchor, "font-size": o.size, "font-weight": o.weight, style: `fill:${o.color}` }, svg).textContent = s;
@@ -51,8 +54,8 @@
     el("rect", { x: 20, y: 60, width: 170, height: 120, rx: 12, fill: SOFT, stroke: "#d8dbe0" }, svg);
     el("circle", { cx: 92, cy: 110, r: 18, fill: "#fff", stroke: INK, "stroke-width": 2 }, svg);
     el("circle", { cx: 116, cy: 110, r: 18, fill: "none", stroke: INK, "stroke-width": 2 }, svg);
-    text(105, 205, "Substation", { weight: "bold" });
-    text(105, 224, "fixed voltage 1.0 p.u.", { color: MUTED });
+    text(105, 205, t("Substation"), { weight: "bold" });
+    text(105, 224, t("fixed voltage 1.0 p.u."), { color: MUTED });
 
     // Feeder with houses, voltage rising towards the end.
     const feederY = 110;
@@ -80,9 +83,9 @@
     }
     el("path", { d, fill: "none", stroke: colors.baseline, "stroke-width": 2.4 }, svg);
     el("line", { x1: 150, x2: 1030, y1: 62, y2: 62, stroke: MUTED, "stroke-width": 1.2, "stroke-dasharray": "5 4" }, svg);
-    text(156, 56, "1.05 p.u. limit", { color: MUTED, anchor: "start", size: 13 });
-    text(790, 44, "voltage rises along the feeder at midday", { color: colors.baseline, size: 13 });
-    text(612, 252, "Solar export raises the voltage far from the substation; each inverter can absorb reactive power to lower it", { color: MUTED });
+    text(156, 56, t("1.05 p.u. limit"), { color: MUTED, anchor: "start", size: 13 });
+    text(790, 44, t("voltage rises along the feeder at midday"), { color: colors.baseline, size: 13 });
+    text(612, 252, t("Solar export raises the voltage far from the substation; each inverter can absorb reactive power to lower it"), { color: MUTED });
   })();
 
   // ---------- Voltage colour scale ----------
@@ -101,9 +104,9 @@
     return `rgb(${stops[stops.length - 1][1]})`;
   }
   const legend = document.getElementById("map-legend");
-  legend.innerHTML = [[0.95, "0.95"], [1.0, "1.00"], [1.05, "1.05 (limit)"], [1.1, "1.10"], [1.2, "1.20 p.u."]]
+  legend.innerHTML = [[0.95, "0.95"], [1.0, "1.00"], [1.05, t("1.05 (limit)")], [1.1, "1.10"], [1.2, "1.20 p.u."]]
     .map(([v, label]) => `<span><i style="background:${voltageColor(v)};height:10px;width:18px"></i>${label}</span>`).join("") +
-    `<span><i style="background:#1f2328;height:8px;width:8px;border-radius:2px"></i>PV inverter</span>`;
+    `<span><i style="background:#1f2328;height:8px;width:8px;border-radius:2px"></i>${t("PV inverter")}</span>`;
 
   // ---------- Feeder maps ----------
   const F = D.feeder;
@@ -111,7 +114,7 @@
   const px = (b) => pad + (mapW - 2 * pad) * F.x[b];
   const py = (b) => pad + (mapH - 2 * pad) * F.y[b];
   function feederMap(key) {
-    const svg = el("svg", { viewBox: `0 0 ${mapW} ${mapH}`, role: "img", "aria-label": `Bus voltages ${names[key]}` }, document.getElementById("map-" + key));
+    const svg = el("svg", { viewBox: `0 0 ${mapW} ${mapH}`, role: "img", "aria-label": t("Bus voltages {policy}", { policy: names[key] }) }, document.getElementById("map-" + key));
     const lines = F.branches.map(([a, b]) => el("line", { x1: px(a), y1: py(a), x2: px(b), y2: py(b), "stroke-width": 3.2, "stroke-linecap": "round" }, svg));
     const dots = range(B).map((b) => el("circle", { cx: px(b), cy: py(b), r: 2.6 }, svg));
     F.pv_bus.forEach((b) => el("rect", { x: px(b) - 3.5, y: py(b) - 3.5, width: 7, height: 7, rx: 1.5, fill: "#1f2328" }, svg));
@@ -129,52 +132,55 @@
   const reduction = (key, series) => {
     if (key === "baseline" || policies.baseline[series][k] <= 0) return `<em class="delta">&nbsp;</em>`;
     const change = 100 * (1 - D.dgpg[series][k] / D.baseline[series][k]);
-    return `<em class="delta">${change >= 0 ? "−" : "+"}${Math.abs(change).toFixed(0)} % vs no control</em>`;
+    return `<em class="delta">${t("{change} % vs no control", { change: `${change >= 0 ? "−" : "+"}${Math.abs(change).toFixed(0)}` })}</em>`;
   };
   function drawKpis(key) {
     const p = policies[key];
     document.getElementById("kpi-" + key).innerHTML =
-      `<div class="kpi"><span>Highest bus voltage</span><strong>${p.v_max[k].toFixed(3)} p.u.</strong></div>` +
-      `<div class="kpi"><span>Buses outside the band now</span><strong>${p.out_of_band_percent[k].toFixed(0)} %</strong></div>` +
-      `<div class="kpi"><span>Bus-time outside the band so far</span><strong>${p.outsideSoFar[k].toFixed(1)} %</strong>${reduction(key, "outsideSoFar")}</div>`;
+      `<div class="kpi"><span>${t("Highest bus voltage")}</span><strong>${p.v_max[k].toFixed(3)} p.u.</strong></div>` +
+      `<div class="kpi"><span>${t("Buses outside the band now")}</span><strong>${p.out_of_band_percent[k].toFixed(0)} %</strong></div>` +
+      `<div class="kpi"><span>${t("Bus-time outside the band so far")}</span><strong>${p.outsideSoFar[k].toFixed(1)} %</strong>${reduction(key, "outsideSoFar")}</div>`;
   }
 
   // ---------- Time-series charts ----------
   const vTop = Math.ceil(Math.max(...D.baseline.v_max) * 50) / 50;
   const vmaxChart = lineChart(document.getElementById("chart-vmax"), {
-    xDomain, yDomain: [0.98, vTop], xLabel: "Time of day", yLabel: "Highest voltage (p.u.)", xFormat: hourTick, yFormat: voltTick,
+    xDomain, yDomain: [0.98, vTop], xLabel: t("Time of day"), yLabel: t("Highest voltage (p.u.)"), xFormat: hourTick, yFormat: voltTick,
     series: [
       { x: times, y: D.baseline.v_max, color: colors.baseline, label: names.baseline },
       { x: times, y: D.dgpg.v_max, color: colors.dgpg, label: names.dgpg },
-      { x: xDomain, y: [vUpper, vUpper], color: "#5b6370", dash: "5 4", label: "Limit", width: 1.2, static: true },
+      { x: xDomain, y: [vUpper, vUpper], color: "#5b6370", dash: "5 4", label: t("Limit"), width: 1.2, static: true },
     ],
   });
   const outsideTop = Math.ceil(Math.max(...D.baseline.out_of_band_percent) / 10) * 10;
   const outsideChart = lineChart(document.getElementById("chart-outside"), {
-    xDomain, yDomain: [0, outsideTop], xLabel: "Time of day", yLabel: "Buses outside band (%)", xFormat: hourTick,
+    xDomain, yDomain: [0, outsideTop], xLabel: t("Time of day"), yLabel: t("Buses outside band (%)"), xFormat: hourTick,
     series: [
       { x: times, y: D.baseline.out_of_band_percent, color: colors.baseline, label: names.baseline },
       { x: times, y: D.dgpg.out_of_band_percent, color: colors.dgpg, label: names.dgpg },
     ],
   });
   const pvChart = lineChart(document.getElementById("chart-pv"), {
-    xDomain, yDomain: [0, Math.ceil(Math.max(...D.day.pv_mw, ...D.day.load_mw) * 2) / 2], xLabel: "Time of day", yLabel: "Power (MW)", xFormat: hourTick,
+    xDomain, yDomain: [0, Math.ceil(Math.max(...D.day.pv_mw, ...D.day.load_mw) * 2) / 2], xLabel: t("Time of day"), yLabel: t("Power (MW)"), xFormat: hourTick,
     series: [
-      { x: times, y: D.day.pv_mw, color: colors.pv, label: "Solar output", width: 2, static: true },
-      { x: times, y: D.day.load_mw, color: colors.load, label: "Load", width: 1.2, static: true },
+      { x: times, y: D.day.pv_mw, color: colors.pv, label: t("Solar output"), width: 2, static: true },
+      { x: times, y: D.day.load_mw, color: colors.load, label: t("Load"), width: 1.2, static: true },
     ],
   });
   const qMin = Math.min(...D.dgpg.q_total_mvar);
   const qChart = lineChart(document.getElementById("chart-q"), {
-    xDomain, yDomain: [Math.floor(qMin * 2) / 2, 0.5], xLabel: "Time of day", yLabel: "Reactive power (MVAr)", xFormat: hourTick, zeroLine: true,
+    xDomain, yDomain: [Math.floor(qMin * 2) / 2, 0.5], xLabel: t("Time of day"), yLabel: t("Reactive power (MVAr)"), xFormat: hourTick, zeroLine: true,
     series: [
       { x: times, y: D.baseline.q_total_mvar, color: colors.baseline, label: names.baseline },
-      { x: times, y: D.dgpg.q_total_mvar, color: colors.dgpg, label: `${names.dgpg}, sum of ${N} inverters` },
+      { x: times, y: D.dgpg.q_total_mvar, color: colors.dgpg, label: t("{policy}, sum of {n} inverters", { policy: names.dgpg, n: N }) },
     ],
   });
   const dayOutside = (p) => p.outsideSoFar[T - 1];
   document.getElementById("outcome").textContent =
-    `Over the day, AI control lowers the share of bus-time outside the band from ${dayOutside(D.baseline).toFixed(1)} % to ${dayOutside(D.dgpg).toFixed(1)} %, and the highest voltage from ${Math.max(...D.baseline.v_max).toFixed(3)} to ${Math.max(...D.dgpg.v_max).toFixed(3)} p.u.`;
+    t("Over the day, AI control lowers the share of bus-time outside the band from {before} % to {after} %, and the highest voltage from {vBefore} to {vAfter} p.u.", {
+      before: dayOutside(D.baseline).toFixed(1), after: dayOutside(D.dgpg).toFixed(1),
+      vBefore: Math.max(...D.baseline.v_max).toFixed(3), vAfter: Math.max(...D.dgpg.v_max).toFixed(3),
+    });
 
   // ---------- Training: shared score and individual signal ----------
   const S = D.signals;
@@ -189,28 +195,28 @@
   const signalCharts = [
     lineChart(document.getElementById("chart-signal-reward"), {
       height: 190, xDomain, yDomain: [-1, 1], yLabel: "A(t)", zeroLine: true, xFormat: hourTick,
-      series: [{ x: times, y: [], color: colors.reward, label: "Shared advantage A(t), same for all inverters", width: 1.1, static: true }],
+      series: [{ x: times, y: [], color: colors.reward, label: t("Shared advantage A(t), same for all inverters"), width: 1.1, static: true }],
     }),
     lineChart(document.getElementById("chart-signal-guide"), {
-      height: 210, xDomain, yDomain: [-1, 1], xLabel: "Time of day", yLabel: "−ĝᵢ(t)", zeroLine: true, xFormat: hourTick,
-      series: [{ x: times, y: [], color: colors.dgpg, label: "Guidance −ĝᵢ(t) of this inverter", width: 1.1, static: true }],
+      height: 210, xDomain, yDomain: [-1, 1], xLabel: t("Time of day"), yLabel: "−ĝᵢ(t)", zeroLine: true, xFormat: hourTick,
+      series: [{ x: times, y: [], color: colors.dgpg, label: t("Guidance −ĝᵢ(t) of this inverter"), width: 1.1, static: true }],
     }),
   ];
   const signalMatrices = [S.reward_advantage.map((v) => new Array(N).fill(v)), individual];
   const barCharts = [
     lineChart(document.getElementById("chart-bars-reward"), {
       height: 190, xDomain: [0.5, N + 0.5], yDomain: [-1, 1], yLabel: "A(t)", zeroLine: true,
-      series: [{ x: [], y: [], color: colors.reward, label: "Shared advantage A(t)" }],
+      series: [{ x: [], y: [], color: colors.reward, label: t("Shared advantage A(t)") }],
     }),
     lineChart(document.getElementById("chart-bars-guide"), {
-      height: 210, xDomain: [0.5, N + 0.5], yDomain: [-1, 1], xLabel: "Inverter", yLabel: "−ĝᵢ(t)", zeroLine: true,
-      series: [{ x: [], y: [], color: colors.dgpg, label: "Guidance −ĝᵢ(t)" }],
+      height: 210, xDomain: [0.5, N + 0.5], yDomain: [-1, 1], xLabel: t("Inverter"), yLabel: "−ĝᵢ(t)", zeroLine: true,
+      series: [{ x: [], y: [], color: colors.dgpg, label: t("Guidance −ĝᵢ(t)") }],
     }),
   ];
   const bw = barCharts[0].w / N;
   const barRects = barCharts.map((chart, c) => range(N).map((i) => {
     const rect = el("rect", { width: bw * 0.7, fill: c === 0 ? colors.reward : colors.dgpg, style: "cursor:pointer" }, chart.dataLayer);
-    el("title", {}, rect).textContent = `Inverter ${i + 1}`;
+    el("title", {}, rect).textContent = t("Inverter {n}", { n: i + 1 });
     rect.addEventListener("click", () => select(i));
     return rect;
   }));
@@ -220,7 +226,7 @@
   function drawSignals() {
     const s = +stepInput.value;
     document.getElementById("signal-step-out").textContent = fmtClock(s);
-    document.getElementById("signal-title").textContent = `Inverter ${selected + 1} during training`;
+    document.getElementById("signal-title").textContent = t("Inverter {n} during training", { n: selected + 1 });
     signalCharts.forEach((chart, c) => {
       const values = column(signalMatrices[c], selected);
       chart.setYDomain(symmetric(values));
@@ -254,9 +260,9 @@
     return total > 0 ? 100 * (within / matrix.length) / total : 0;
   }
   document.getElementById("spread-note").textContent =
-    `Variation that differs between inverters: A ${spreadShare(signalMatrices[0]).toFixed(1)} %, ĝᵢ ${spreadShare(individual).toFixed(1)} %.`;
+    t("Variation that differs between inverters: A {a} %, ĝᵢ {g} %.", { a: spreadShare(signalMatrices[0]).toFixed(1), g: spreadShare(individual).toFixed(1) });
   document.getElementById("signal-note").textContent =
-    `One training day after ${S.update * D.meta.rollouts_per_update} training days. Separate vertical scales. Click a bar to select an inverter.`;
+    t("One training day after {days} training days. Separate vertical scales. Click a bar to select an inverter.", { days: S.update * D.meta.rollouts_per_update });
   stepInput.addEventListener("input", drawSignals);
 
   // ---------- Learning progress ----------
@@ -265,14 +271,14 @@
   const daysOf = (update) => update * D.meta.rollouts_per_update;
   const lastDays = daysOf(curve[curve.length - 1].update);
   const curveSpecs = [
-    ["chart-curve-outside", "out_of_band_percent", "Bus-time outside (%)", 0],
-    ["chart-curve-vmax", "v_max", "Highest voltage (p.u.)", 0.98],
+    ["chart-curve-outside", "out_of_band_percent", t("Bus-time outside (%)"), 0],
+    ["chart-curve-vmax", "v_max", t("Highest voltage (p.u.)"), 0.98],
   ];
   const curveCharts = curveSpecs.map(([id, field, label, floor], c) => {
     const values = [...curve.map((row) => row[field]), noControl[field]];
     const top = field === "v_max" ? Math.ceil(Math.max(...values) * 50) / 50 : Math.ceil(Math.max(...values) / 5) * 5;
     const chart = lineChart(document.getElementById(id), {
-      height: 200, xDomain: [0, lastDays], yDomain: [floor, top], xLabel: c === 1 ? "Training days" : "", yLabel: label,
+      height: 200, xDomain: [0, lastDays], yDomain: [floor, top], xLabel: c === 1 ? t("Training days") : "", yLabel: label,
       yFormat: field === "v_max" ? voltTick : undefined,
       series: [
         { x: curve.map((row) => daysOf(row.update)), y: curve.map((row) => row[field]), color: colors.dgpg, label: names.dgpg, static: true },
@@ -286,14 +292,14 @@
   });
   const firstBelow = curve.find((row) => row.out_of_band_percent < noControl.out_of_band_percent);
   document.getElementById("curve-note").textContent =
-    `Mean over ${D.meta.evaluation_days} held-out days. Fewer voltage violations than no control after ${firstBelow ? daysOf(firstBelow.update) : "–"} training days.`;
+    t("Mean over {days} held-out days. Fewer voltage violations than no control after {training} training days.", { days: D.meta.evaluation_days, training: firstBelow ? daysOf(firstBelow.update) : "–" });
 
   const progressChart = lineChart(document.getElementById("chart-progress"), {
-    xDomain, yDomain: [0.98, vTop], xLabel: "Time of day", yLabel: "Highest voltage (p.u.)", xFormat: hourTick, yFormat: voltTick,
+    xDomain, yDomain: [0.98, vTop], xLabel: t("Time of day"), yLabel: t("Highest voltage (p.u.)"), xFormat: hourTick, yFormat: voltTick,
     series: [
       { x: times, y: D.baseline.v_max, color: colors.baseline, label: names.baseline, opacity: 0.7, static: true },
-      { x: times, y: D.progress[0].v_max, color: colors.dgpg, label: "AI after this training", static: true },
-      { x: xDomain, y: [vUpper, vUpper], color: "#5b6370", dash: "5 4", label: "Limit", width: 1.2, static: true },
+      { x: times, y: D.progress[0].v_max, color: colors.dgpg, label: t("AI after this training"), static: true },
+      { x: xDomain, y: [vUpper, vUpper], color: "#5b6370", dash: "5 4", label: t("Limit"), width: 1.2, static: true },
     ],
   });
   const episodeInput = document.getElementById("episode");
@@ -346,7 +352,7 @@
   }
   function setPlaying(value) {
     playing = value;
-    playButton.textContent = playing ? "Pause" : k >= T - 1 ? "Replay" : k !== START ? "Resume" : "Start";
+    playButton.textContent = t(playing ? "Pause" : k >= T - 1 ? "Replay" : k !== START ? "Resume" : "Start");
     if (playing) {
       if (k >= T - 1) k = START;
       last = null;

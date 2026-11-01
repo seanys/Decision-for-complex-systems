@@ -13,7 +13,9 @@
   --panel: #ffffff;
   --page: #f6f7f9;
   --bar: #b9c3d3;
-  font-family: Helvetica, Arial, sans-serif;
+  /* Chinese text falls back to the system CJK fonts. */
+  --font: Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", sans-serif;
+  font-family: var(--font);
   color: var(--ink);
 }
 
@@ -111,7 +113,7 @@ button[aria-pressed=true] { background: var(--ink); color: #fff; border-color: v
 .speed button { padding: 6px 8px; }
 
 .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-.tag { font-size: 12px; font-weight: bold; padding: 2px 8px; border-radius: 10px; color: #fff; }
+.tag { font-size: 12px; font-weight: bold; padding: 2px 8px; border-radius: 10px; color: #fff; white-space: nowrap; }
 .tag.baseline { background: var(--orange); }
 .tag.dgpg { background: var(--blue); }
 
@@ -121,7 +123,7 @@ button[aria-pressed=true] { background: var(--ink); color: #fff; border-color: v
 .kpi strong { font-size: 22px; font-variant-numeric: tabular-nums; }
 
 svg { display: block; width: 100%; height: auto; overflow: visible; }
-svg text { font-family: Helvetica, Arial, sans-serif; fill: var(--ink); }
+svg text { font-family: var(--font); fill: var(--ink); }
 .axis-label { font-size: 14px; }
 .tick-label { font-size: 12px; }
 .legend-label { font-size: 14px; }
@@ -150,7 +152,7 @@ svg text { font-family: Helvetica, Arial, sans-serif; fill: var(--ink); }
 .spec-icon { width: 36px; height: 36px; padding: 7px; border-radius: 50%; background: #fff; fill: none; stroke: var(--blue); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .spec > div.goal { background: #e8eef7; }
 .spec .goal b { color: var(--blue); }
-.spec .goal p { font-size: 18px; font-weight: bold; line-height: 1.35; }
+.spec .goal p { font-weight: bold; }
 .kpi em.delta { display: block; font-style: normal; font-size: 12px; font-weight: bold; color: var(--green); }
 .kpi em.delta.worse { color: var(--muted); }
 .steps { padding: 8px 20px; }
@@ -160,9 +162,19 @@ svg text { font-family: Helvetica, Arial, sans-serif; fill: var(--ink); }
 .step:not(:last-of-type)::before { content: ""; position: absolute; left: 15px; top: 50%; height: 100%; border-left: 2px solid #c9d4e5; }
 .step-head b { display: block; font-size: 16px; }
 .step-tag { display: inline-block; margin-top: 4px; font-size: 12px; color: var(--blue); background: #e8eef7; border-radius: 10px; padding: 1px 8px; }
+.step-body { min-width: 0; }
+/* A formula wider than the column scrolls sideways instead of being cut off. */
+.step-formula { overflow-x: auto; overflow-y: hidden; padding: 2px 0 4px; -webkit-overflow-scrolling: touch; }
 .step-body math { font-size: 19px; }
 .step-body p { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
 @media (max-width: 860px) { .step { grid-template-columns: 40px 1fr; } .step-body { grid-column: 2; } }
+@media (max-width: 640px) {
+  .steps { padding: 4px 14px; } .step { grid-template-columns: 32px 1fr; gap: 12px; } .step-body math { font-size: 16px; }
+  /* Keep the problem diagram legible: it scrolls sideways instead of shrinking to fit. */
+  #problem-diagram { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+  #problem-diagram svg { min-width: 720px; }
+}
+.more-right { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
 .scaling { gap: 28px; align-items: start; }
 .scaling h3 { margin-bottom: 8px; }
 .steps-lead { margin: 0 0 6px; color: var(--muted); }
@@ -190,7 +202,7 @@ svg text { font-family: Helvetica, Arial, sans-serif; fill: var(--ink); }
 .scenario-thumb svg { border-radius: 8px; }
 .scenario h3 { font-size: 18px; margin-bottom: 6px; }
 .scenario .note { margin-bottom: 6px; }
-@media (max-width: 640px) { .scenario { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .scenario, .more-scenarios { grid-template-columns: 1fr; } }
 .more-scenarios { display: grid; grid-template-columns: 200px 1fr; gap: 18px; align-items: center; margin-top: 16px; }
 .scenario-thumb.small svg { max-height: 110px; }
 .tutorial { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; padding: 24px; color: #e8f4ff; background: linear-gradient(120deg, #0b1d36, #13345f); border: none; }
@@ -242,9 +254,27 @@ body:has(> .site-footer) > main { flex: 1; width: 100%; }
 .nav-menu-list .nav-menu-all { margin-top: 4px; padding-top: 10px; border-top: 1px solid #1c2c45; border-radius: 0 0 6px 6px; color: #5cc8ff; }
 @media (max-width: 640px) { .header-nav { gap: 18px; } .nav-menu-list { right: -60px; } }
 
+/* Language switch: EN / 中文, in the header and at the top right of the overview hero. */
+html.i18n-pending body { visibility: hidden; }
+.lang-switch { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid #2a4468; border-radius: 16px; }
+.lang-switch button { border: 0; border-radius: 14px; background: transparent; color: #a9c3e6; font-size: 13px; line-height: 1.4; padding: 3px 10px; white-space: nowrap; }
+.lang-switch button:hover { color: #f2f8ff; }
+.lang-switch button[aria-pressed=true] { background: rgba(92, 200, 255, 0.18); color: #f2f8ff; cursor: default; }
+.lang-switch button:focus-visible { outline: 2px solid #5cc8ff; outline-offset: 1px; }
+.hero-lang { position: absolute; top: 0; left: 0; right: 0; z-index: 1; max-width: 1240px; margin: 0 auto; padding: 18px 16px 0; display: flex; justify-content: flex-end; pointer-events: none; }
+.hero-lang .lang-switch { pointer-events: auto; background: rgba(6, 13, 26, 0.6); }
+/* On narrow screens only the other language is offered. */
+@media (max-width: 640px) { .lang-switch button[aria-pressed=true] { display: none; } .lang-switch button { padding: 3px 8px; } }
+@media (max-width: 460px) {
+  .header-nav { gap: 14px; flex: none; }
+  .header-brand { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+}
+
 /* Robotaxi rebalancing page */
 .timeline-card { margin-top: 16px; padding-bottom: 10px; }
 .pattern-now { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin-bottom: 8px; font-size: 16px; }
 .pattern-now .note { margin: 0; }
 .pattern-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; align-self: center; }
 .city svg { max-width: 600px; margin: 8px auto 0; }
+.road svg { max-width: 600px; margin: 8px auto 0; }
+#problem-diagram svg { max-width: 560px; }

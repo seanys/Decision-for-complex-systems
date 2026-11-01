@@ -56,10 +56,46 @@
     const innerWidth = container.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
     const o = Object.assign({ height: 240, margin: { top: 34, right: 14, bottom: 46, left: 62 }, xTicks: 6, yTicks: 5 }, options);
     o.width = Math.max(280, Math.round(innerWidth));
-    const m = o.margin;
+    const m = Object.assign({}, o.margin);
     const w = o.width - m.left - m.right;
     const h = o.height - m.top - m.bottom;
-    const svg = el("svg", { viewBox: `0 0 ${o.width} ${o.height}`, role: "img", "aria-label": o.ariaLabel || o.yLabel || "chart" }, container);
+    const svg = el("svg", { role: "img", "aria-label": o.ariaLabel || o.yLabel || "chart" }, container);
+
+    // Lay the legend out in rows that fit the chart width (narrow screens get several rows, and a label
+    // longer than the width wraps onto lines of its own); each extra row adds to the top margin, so the
+    // plot area keeps its height.
+    const legendItems = [];
+    let legendRowCount = 0;
+    {
+      const room = w + m.right;
+      const probe = el("text", { class: "legend-label", visibility: "hidden" }, svg);
+      const measure = (text) => { probe.textContent = text; return probe.getComputedTextLength(); };
+      let row = 0, x = 0, used = false;
+      for (const s of o.series) {
+        if (!s.label) continue;
+        let lines = [s.label];
+        if (24 + measure(s.label) > room) {
+          // Break between words, or between any two Chinese characters.
+          lines = [];
+          let line = "";
+          for (const piece of s.label.match(/[\u2e80-\u9fff\uff00-\uffef]\s*|[^\s\u2e80-\u9fff\uff00-\uffef]+\s*/g)) {
+            if (line && 24 + measure((line + piece).trim()) > room) { lines.push(line.trim()); line = piece; } else line += piece;
+          }
+          lines.push(line.trim());
+        }
+        const width = 24 + Math.max(...lines.map(measure));
+        if (used && (lines.length > 1 || x + width > room)) { row += 1; x = 0; }
+        legendItems.push({ s, x, row, lines });
+        row += lines.length - 1;
+        x = lines.length > 1 ? room : x + width + 18;
+        used = true;
+      }
+      legendRowCount = used ? row + 1 : 0;
+      probe.remove();
+    }
+    const legendExtra = Math.max(0, legendRowCount - 1) * 20;
+    m.top += legendExtra;
+    svg.setAttribute("viewBox", `0 0 ${o.width} ${o.height + legendExtra}`);
     const root = el("g", { transform: `translate(${m.left},${m.top})` }, svg);
     const gridLayer = el("g", {}, root);
     const dataLayer = el("g", {}, root);
@@ -102,14 +138,10 @@
     }
 
     function drawLegend() {
-      let x = 0;
-      for (const s of o.series) {
-        if (!s.label) continue;
-        const g = el("g", { transform: `translate(${x},${-20})` }, axisLayer);
+      for (const { s, x, row, lines } of legendItems) {
+        const g = el("g", { transform: `translate(${x},${-20 - legendExtra + row * 20})` }, axisLayer);
         el("line", { x1: 0, x2: 18, y1: 0, y2: 0, stroke: s.color, "stroke-width": 2.4, "stroke-dasharray": s.dash || "" }, g);
-        const text = el("text", { x: 24, y: 5, class: "legend-label" }, g);
-        text.textContent = s.label;
-        x += 24 + text.getComputedTextLength() + 18;
+        lines.forEach((line, j) => { el("text", { x: 24, y: 5 + j * 20, class: "legend-label" }, g).textContent = line; });
       }
     }
 

@@ -2,6 +2,7 @@
 (function () {
   const D = window.DGPG_POWER;
   const { el, lineChart } = window.Plot;
+  const { t } = window.I18N;
   const N = D.meta.n_generators;
   // Show the first 20 minutes of the test disturbance.
   const H = D.meta.horizon_steps;
@@ -22,7 +23,7 @@
   const archetype = D.generators.archetype;
   const policies = { baseline: D.baseline, dgpg: D.dgpg };
   const colors = { baseline: "#DD8452", dgpg: "#4C72B0", reward: "#8172B3" };
-  const names = { baseline: "Without control", dgpg: "With AI control" };
+  const names = { baseline: t("Without control"), dgpg: t("With AI control") };
 
   const minutes = (k) => (k * dt) / 60;
   const stateTimes = Array.from({ length: T + 1 }, (_, k) => minutes(k));
@@ -58,7 +59,7 @@
   // ---------- Problem diagram ----------
   (function drawProblem() {
     const INK = "#1f2328", MUTED = "#5b6370", BLUE = "#4C72B0", SOFT = "#f6f7f9";
-    const svg = el("svg", { viewBox: "0 20 1100 236", role: "img", "aria-label": "Problem setting", style: "max-width:1100px;margin:0 auto" }, document.getElementById("problem-diagram"));
+    const svg = el("svg", { viewBox: "0 20 1100 236", role: "img", "aria-label": t("Problem setting"), style: "max-width:1100px;margin:0 auto" }, document.getElementById("problem-diagram"));
     const text = (x, y, s, opts) => {
       const o = Object.assign({ size: 14, color: INK, anchor: "middle", weight: "normal" }, opts);
       el("text", { x, y, "text-anchor": o.anchor, "font-size": o.size, "font-weight": o.weight, style: `fill:${o.color}` }, svg).textContent = s;
@@ -73,8 +74,8 @@
     el("circle", { cx: 70, cy: 100, r: 3.5, fill: "#fff", stroke: INK, "stroke-width": 1.5 }, svg);
     el("path", { d: "M118,164 L118,126 L138,110 L158,126 L158,164 Z", fill: "#fff", stroke: INK, "stroke-width": 1.8, "stroke-linejoin": "round" }, svg);
     el("rect", { x: 132, y: 140, width: 12, height: 24, fill: "#fff", stroke: INK, "stroke-width": 1.5 }, svg);
-    text(110, 205, "Wind and demand", { weight: "bold" });
-    text(110, 224, "net load fluctuates", { color: MUTED });
+    text(110, 205, t("Wind and demand"), { weight: "bold" });
+    text(110, 224, t("net load fluctuates"), { color: MUTED });
 
     // Shared grid bus with its frequency.
     const busY = 115;
@@ -82,7 +83,7 @@
     el("line", { x1: 240, y1: busY, x2: 1070, y2: busY, stroke: INK, "stroke-width": 6, "stroke-linecap": "round" }, svg);
     el("rect", { x: 560, y: 46, width: 220, height: 34, rx: 17, fill: "#fff", stroke: INK, "stroke-width": 1.5 }, svg);
     el("path", { d: "M580,63 q6,-10 12,0 t12,0", fill: "none", stroke: BLUE, "stroke-width": 2 }, svg);
-    text(686, 68, "Shared frequency 50 Hz", { weight: "bold" });
+    text(686, 68, t("Shared frequency 50 Hz"), { weight: "bold" });
     el("line", { x1: 670, y1: 80, x2: 670, y2: busY - 3, stroke: INK, "stroke-width": 1.5, "stroke-dasharray": "3 3" }, svg);
 
     // Heterogeneous generators, each with its own AI controller and cost level.
@@ -99,7 +100,7 @@
       text(x, cy + r + 20, cost, { color: MUTED });
     });
     text(1048, 180, "…", { size: 20, color: MUTED });
-    text(612, 250, "Generators differ in capacity, cost and ramp speed; each one is a decision maker", { color: MUTED });
+    text(612, 250, t("Generators differ in capacity, cost and ramp speed; each one is a decision maker"), { color: MUTED });
   })();
 
   // ---------- Cost classes: generator types ordered by marginal cost at the start ----------
@@ -109,7 +110,7 @@
   });
   const typeOrder = range(5).sort((x, y) => typeCost[x] - typeCost[y]);
   const classMembers = typeOrder.map((a) => range(N).filter((i) => archetype[i] === a));
-  const classNames = ["Cheapest", "Class 2", "Class 3", "Class 4", "Costliest"];
+  const classNames = ["Cheapest", "Class 2", "Class 3", "Class 4", "Costliest"].map((name) => t(name));
   const classColors = ["#c9d4e5", "#9fb3d1", "#f2c7a5", "#e39a73", "#C44E52"];
   for (const p of Object.values(policies)) {
     p.classOutput = p.power.map((row) => classMembers.map((m) => m.reduce((s, i) => s + row[i], 0)));
@@ -119,14 +120,14 @@
   const reduction = (key, series) => {
     if (key === "baseline" || k === 0 || D.baseline[series][k] <= 0) return "";
     const change = 100 * (1 - D.dgpg[series][k] / D.baseline[series][k]);
-    return `<em class="delta">${change >= 0 ? "−" : "+"}${Math.abs(change).toFixed(0)} % vs no control</em>`;
+    return `<em class="delta">${t("{change} % vs no control", { change: `${change >= 0 ? "−" : "+"}${Math.abs(change).toFixed(0)}` })}</em>`;
   };
   function drawKpis(key) {
     const p = policies[key];
     document.getElementById("kpi-" + key).innerHTML =
-      `<div class="kpi"><span>Frequency deviation</span><strong>${p.frequency_mhz[k].toFixed(1)} mHz</strong></div>` +
-      `<div class="kpi"><span>RMS frequency deviation so far</span><strong>${p.rmsFrequency[k].toFixed(1)} mHz</strong>${reduction(key, "rmsFrequency")}</div>` +
-      `<div class="kpi"><span>Extra cost so far</span><strong>${p.meanExtra[k].toFixed(2)} %</strong>${reduction(key, "meanExtra")}</div>`;
+      `<div class="kpi"><span>${t("Frequency deviation")}</span><strong>${p.frequency_mhz[k].toFixed(1)} mHz</strong></div>` +
+      `<div class="kpi"><span>${t("RMS frequency deviation so far")}</span><strong>${p.rmsFrequency[k].toFixed(1)} mHz</strong>${reduction(key, "rmsFrequency")}</div>` +
+      `<div class="kpi"><span>${t("Extra cost so far")}</span><strong>${p.meanExtra[k].toFixed(2)} %</strong>${reduction(key, "meanExtra")}</div>`;
   }
 
   // ---------- Time-series charts ----------
@@ -135,10 +136,10 @@
   const generationTop = Math.ceil(Math.max(...D.baseline.load) + 0.5);
   function generationChart(key) {
     const chart = lineChart(document.getElementById("chart-gen-" + key), {
-      xDomain, yDomain: [0, generationTop], xLabel: "Time (min)", yLabel: "Generation (p.u.)",
+      xDomain, yDomain: [0, generationTop], xLabel: t("Time (min)"), yLabel: t("Generation (p.u.)"),
       series: [
         ...classNames.map((name, c) => ({ x: [], y: [], color: classColors[c], label: name, width: 6 })),
-        { x: stateTimes, y: policies[key].load, color: "#1f2328", label: "Load", width: 1.2 },
+        { x: stateTimes, y: policies[key].load, color: "#1f2328", label: t("Load"), width: 1.2 },
       ],
     });
     const layer = el("g", {});
@@ -161,14 +162,14 @@
   }
   const generationCharts = [generationChart("baseline"), generationChart("dgpg")];
   const freqChart = lineChart(document.getElementById("chart-frequency"), {
-    xDomain, xLabel: "Time (min)", yLabel: "Frequency deviation (mHz)", zeroLine: true,
+    xDomain, xLabel: t("Time (min)"), yLabel: t("Frequency deviation (mHz)"), zeroLine: true,
     series: [
       { x: stateTimes, y: D.baseline.frequency_mhz, color: colors.baseline, label: names.baseline },
       { x: stateTimes, y: D.dgpg.frequency_mhz, color: colors.dgpg, label: names.dgpg },
     ],
   });
   const costChart = lineChart(document.getElementById("chart-cost"), {
-    xDomain, xLabel: "Time (min)", yLabel: "Extra cost (%)",
+    xDomain, xLabel: t("Time (min)"), yLabel: t("Extra cost (%)"),
     series: [
       { x: stepTimes, y: D.baseline.regret_percent, color: colors.baseline, label: names.baseline },
       { x: stepTimes, y: D.dgpg.regret_percent, color: colors.dgpg, label: names.dgpg },
@@ -176,7 +177,7 @@
   });
   const cut = (series) => (100 * (1 - D.dgpg[series][T] / D.baseline[series][T])).toFixed(0);
   document.getElementById("outcome").textContent =
-    `Over 20 minutes, AI control lowers the RMS frequency deviation by ${cut("rmsFrequency")} % and the extra cost by ${cut("meanExtra")} %.`;
+    t("Over 20 minutes, AI control lowers the RMS frequency deviation by {frequency} % and the extra cost by {cost} %.", { frequency: cut("rmsFrequency"), cost: cut("meanExtra") });
 
   // ---------- Training: shared score and individual signal ----------
   const S = D.signals;
@@ -191,28 +192,28 @@
   const signalCharts = [
     lineChart(document.getElementById("chart-signal-reward"), {
       height: 190, xDomain, yDomain: [-1, 1], yLabel: "A(t)", zeroLine: true,
-      series: [{ x: stepTimes, y: [], color: colors.reward, label: "Shared advantage A(t), same for all generators", width: 1.1, static: true }],
+      series: [{ x: stepTimes, y: [], color: colors.reward, label: t("Shared advantage A(t), same for all generators"), width: 1.1, static: true }],
     }),
     lineChart(document.getElementById("chart-signal-guide"), {
-      height: 210, xDomain, yDomain: [-1, 1], xLabel: "Time (min)", yLabel: "−ĝᵢ(t)", zeroLine: true,
-      series: [{ x: stepTimes, y: [], color: colors.dgpg, label: "Guidance −ĝᵢ(t) of this generator", width: 1.1, static: true }],
+      height: 210, xDomain, yDomain: [-1, 1], xLabel: t("Time (min)"), yLabel: "−ĝᵢ(t)", zeroLine: true,
+      series: [{ x: stepTimes, y: [], color: colors.dgpg, label: t("Guidance −ĝᵢ(t) of this generator"), width: 1.1, static: true }],
     }),
   ];
   const signalMatrices = [S.reward_advantage, individual];
   const barCharts = [
     lineChart(document.getElementById("chart-bars-reward"), {
       height: 190, xDomain: [0.5, N + 0.5], yDomain: [-1, 1], yLabel: "A(t)", zeroLine: true,
-      series: [{ x: [], y: [], color: colors.reward, label: "Shared advantage A(t)" }],
+      series: [{ x: [], y: [], color: colors.reward, label: t("Shared advantage A(t)") }],
     }),
     lineChart(document.getElementById("chart-bars-guide"), {
-      height: 210, xDomain: [0.5, N + 0.5], yDomain: [-1, 1], xLabel: "Generator", yLabel: "−ĝᵢ(t)", zeroLine: true,
-      series: [{ x: [], y: [], color: colors.dgpg, label: "Guidance −ĝᵢ(t)" }],
+      height: 210, xDomain: [0.5, N + 0.5], yDomain: [-1, 1], xLabel: t("Generator"), yLabel: "−ĝᵢ(t)", zeroLine: true,
+      series: [{ x: [], y: [], color: colors.dgpg, label: t("Guidance −ĝᵢ(t)") }],
     }),
   ];
   const bw = barCharts[0].w / N;
   const barRects = barCharts.map((chart, c) => range(N).map((i) => {
     const rect = el("rect", { width: bw * 0.7, fill: c === 0 ? colors.reward : colors.dgpg, style: "cursor:pointer" }, chart.dataLayer);
-    el("title", {}, rect).textContent = `Generator ${i + 1}`;
+    el("title", {}, rect).textContent = t("Generator {n}", { n: i + 1 });
     rect.addEventListener("click", () => select(i));
     return rect;
   }));
@@ -222,7 +223,7 @@
   function drawSignals() {
     const s = +stepInput.value;
     document.getElementById("signal-step-out").textContent = fmtClock(s + 1);
-    document.getElementById("signal-title").textContent = `Generator ${selected + 1} during training`;
+    document.getElementById("signal-title").textContent = t("Generator {n} during training", { n: selected + 1 });
     signalCharts.forEach((chart, c) => {
       const values = column(signalMatrices[c], selected);
       chart.setYDomain(symmetric(values));
@@ -256,19 +257,19 @@
     return 100 * (within / matrix.length) / total;
   }
   document.getElementById("spread-note").textContent =
-    `Variation that differs between generators: A ${spreadShare(S.reward_advantage).toFixed(1)} %, ĝᵢ ${spreadShare(individual).toFixed(1)} %.`;
+    t("Variation that differs between generators: A {a} %, ĝᵢ {g} %.", { a: spreadShare(S.reward_advantage).toFixed(1), g: spreadShare(individual).toFixed(1) });
   stepInput.addEventListener("input", drawSignals);
 
   // ---------- Learning progress: RMS frequency deviation and extra cost per checkpoint ----------
   const curve = D.evaluation_curve;
   const curveSpecs = [
-    ["chart-curve-frequency", "frequency_rms_mhz", D.meta.baseline_test_frequency_rms_mhz, "RMS frequency dev. (mHz)"],
-    ["chart-curve-cost", "extra_cost_percent", D.meta.baseline_test_extra_cost_percent, "Extra cost (%)"],
+    ["chart-curve-frequency", "frequency_rms_mhz", D.meta.baseline_test_frequency_rms_mhz, t("RMS frequency dev. (mHz)")],
+    ["chart-curve-cost", "extra_cost_percent", D.meta.baseline_test_extra_cost_percent, t("Extra cost (%)")],
   ];
   const curveCharts = curveSpecs.map(([id, field, noControl, label], c) => {
     const top = Math.max(...curve.map((row) => row[field]), noControl);
     const chart = lineChart(document.getElementById(id), {
-      height: 200, xDomain: [0, 50], yDomain: [0, Math.ceil(top)], xLabel: c === 1 ? "Training episode" : "", yLabel: label,
+      height: 200, xDomain: [0, 50], yDomain: [0, Math.ceil(top)], xLabel: c === 1 ? t("Training episode") : "", yLabel: label,
       series: [
         { x: curve.map((row) => row.episode), y: curve.map((row) => row[field]), color: colors.dgpg, label: names.dgpg, static: true },
         { x: [0, 50], y: [noControl, noControl], color: colors.baseline, dash: "5 4", label: names.baseline, static: true },
@@ -281,7 +282,7 @@
   });
   const firstBelow = curve.find((row) => curveSpecs.every(([, field, noControl]) => row[field] < noControl));
   document.getElementById("curve-note").textContent =
-    `Mean of the first ${D.meta.display_minutes} minutes of 10 test disturbances. Better than no control on both after ${firstBelow ? firstBelow.episode : "–"} episodes.`;
+    t("Mean of the first {minutes} minutes of 10 test disturbances. Better than no control on both after {episodes} episodes.", { minutes: D.meta.display_minutes, episodes: firstBelow ? firstBelow.episode : "–" });
 
   // One-minute moving average of the extra cost.
   const smooth = (values, width = 30) => values.map((_, t) => {
@@ -294,10 +295,10 @@
   const baselineCost = smooth(D.baseline.regret_percent);
   const costMax = Math.max(...progressCost.flat(), ...baselineCost);
   const progressChart = lineChart(document.getElementById("chart-progress"), {
-    xDomain, yDomain: [0, Math.ceil(costMax)], xLabel: "Time (min)", yLabel: "Extra cost, 1-min avg. (%)",
+    xDomain, yDomain: [0, Math.ceil(costMax)], xLabel: t("Time (min)"), yLabel: t("Extra cost, 1-min avg. (%)"),
     series: [
       { x: stepTimes, y: baselineCost, color: colors.baseline, label: names.baseline, opacity: 0.7, static: true },
-      { x: stepTimes, y: progressCost[0], color: colors.dgpg, label: "AI after this episode", static: true },
+      { x: stepTimes, y: progressCost[0], color: colors.dgpg, label: t("AI after this episode"), static: true },
     ],
   });
   const episodeInput = document.getElementById("episode");
@@ -351,7 +352,7 @@
   }
   function setPlaying(value) {
     playing = value;
-    playButton.textContent = playing ? "Pause" : k >= T ? "Replay" : k !== START ? "Resume" : "Start";
+    playButton.textContent = t(playing ? "Pause" : k >= T ? "Replay" : k !== START ? "Resume" : "Start");
     if (playing) {
       if (k >= T) k = START;
       last = null;

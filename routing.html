@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-F93VYS39NR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-F93VYS39NR');
+  </script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connected Vehicle Adaptive Routing</title>
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="assets/i18n-zh.js"></script>
+  <script src="assets/i18n.js"></script>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+</head>
+<body>
+  <script src="assets/layout.js" data-part="header"></script>
+
+  <main class="page">
+    <p class="eyebrow"><a href="index.html">Scenarios</a> / Adaptive routing</p>
+    <h1>AI for Real-Time Adaptive Routing of Connected Vehicles</h1>
+
+    <section class="section card" style="margin-top:18px">
+      <h2>Which link should each connected vehicle take next?</h2>
+      <div class="problem">
+        <div id="problem-diagram" class="road"></div>
+        <div class="legend-inline" id="problem-legend" style="justify-content:center"></div>
+        <div class="spec">
+          <div class="goal"><svg class="spec-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/></svg><div><b>Each vehicle's objective</b><p>Reach its destination as fast as possible, while all vehicles compete for the same roads</p></div></div>
+          <div><svg class="spec-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><div><b>Each vehicle observes</b><p>Traffic and incidents on every link, and how many vehicles of each OD group intend to take each link</p></div></div>
+          <div><svg class="spec-icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="9" cy="7" r="2.4"/><circle cx="15" cy="17" r="2.4"/></svg><div><b>Each vehicle decides</b><p>Its next link, every 30 seconds</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="intro">
+        <h2>How the network responds to traffic incidents</h2>
+        <p class="lead" id="episode-note"></p>
+      </div>
+    </section>
+
+    <section class="controls" aria-label="Playback controls">
+      <button class="primary" id="play" type="button">Start</button>
+      <button id="restart" type="button">Restart</button>
+      <div class="speed" role="group" aria-label="Playback speed">
+        <button type="button" data-speed="1" aria-pressed="false">1×</button>
+        <button type="button" data-speed="2" aria-pressed="false">2×</button>
+        <button type="button" data-speed="4" aria-pressed="true">4×</button>
+        <button type="button" data-speed="8" aria-pressed="false">8×</button>
+      </div>
+      <input id="time" type="range" min="0" max="1" value="0" step="1" aria-label="Time">
+      <output id="clock">00:00</output>
+    </section>
+
+    <section class="card timeline-card">
+      <div class="pattern-now" id="incident-now"></div>
+      <div id="incident-timeline"></div>
+      <p class="note" style="margin:4px 0 0">Bars: traffic incidents on each link over the episode. Click to jump to a moment.</p>
+    </section>
+
+    <section class="grid-2" style="margin-top:16px">
+      <article class="card">
+        <div class="panel-head"><h2>Without adaptive routing</h2><span class="tag baseline">Fixed routes</span></div>
+        <p class="note" style="margin:4px 0 0">Each vehicle keeps the route it was assigned at departure, from the user equilibrium of the network without incidents.</p>
+        <div class="kpis" id="kpi-fixed"></div>
+        <div class="road" id="map-fixed"></div>
+      </article>
+      <article class="card">
+        <div class="panel-head"><h2>With learned joint adaptive routing</h2><span class="tag dgpg">Adaptive</span></div>
+        <p class="note" style="margin:4px 0 0">Every 30 seconds, each vehicle chooses its next link from real-time traffic, anticipating the route choices of the other vehicles.</p>
+        <div class="kpis" id="kpi-adaptive"></div>
+        <div class="road" id="map-adaptive"></div>
+      </article>
+    </section>
+    <div class="legend-inline" id="map-legend"></div>
+    <p class="lead" id="outcome" style="margin-top:14px"></p>
+
+    <section class="section grid-2">
+      <article class="card">
+        <h3>Vehicles in the network</h3>
+        <div id="chart-network"></div>
+        <p class="note" style="margin:4px 0 0">Vehicles that have departed but not yet arrived, in the replayed episode.</p>
+      </article>
+      <article class="card">
+        <h3>Mean travel time by OD pair</h3>
+        <div id="chart-od"></div>
+        <p class="note" id="od-note" style="margin:4px 0 0"></p>
+      </article>
+    </section>
+  </main>
+
+  <script src="assets/layout.js" data-part="footer"></script>
+
+  <script src="data/routing.js"></script>
+  <script src="assets/plot.js"></script>
+  <script src="assets/routing.js"></script>
+</body>
+</html>
